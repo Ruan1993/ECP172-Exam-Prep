@@ -1,0 +1,3 @@
+import assert from'node:assert/strict';import test from'node:test';import{parseSession,safeResumeMode}from'../src/session.ts';
+test('continue session accepts valid state and rejects damaged state',()=>{const valid={version:1,area:'Q3',mode:'recall',card:4,updatedAt:'2026-10-12T12:00:00.000Z'};assert.deepEqual(parseSession(valid),valid);assert.equal(parseSession({...valid,area:'Q9'}),null);assert.equal(parseSession({...valid,card:-1}),null)});
+test('listen resumes safely without automatic speech',()=>{assert.equal(safeResumeMode('listen'),'learn');assert.equal(safeResumeMode('practice'),'practice')});

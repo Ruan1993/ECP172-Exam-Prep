@@ -1,0 +1,41 @@
+import type{Area}from'./types';
+
+export interface LearningCard{title:string;body:string;example?:string;takeaway:string}
+
+export const learningSequences:Record<Area,LearningCard[]>={
+ Q1:[
+  {title:'Start with the learner’s right',body:'Education policy questions usually begin with a learner, a school decision and a right that may be affected.',example:'A school refuses admission because of a learner’s home language.',takeaway:'Identify the right and the exact scenario fact before naming policy.'},
+  {title:'Use the Constitution as the foundation',body:'Equality, dignity and the right to education guide how school decisions should be judged.',example:'Ask whether the decision unfairly excludes or disadvantages the learner.',takeaway:'Name the principle, then connect it to the fact.'},
+  {title:'Apply school law and policy',body:'The South African Schools Act, admission rules and language policy make the constitutional principles practical in public schools.',example:'Admission and language decisions must be lawful, fair and consistent with learner rights.',takeaway:'Do not list laws; explain what each relevant source requires.'},
+  {title:'Understand language policy',body:'The Language in Education Policy supports multilingualism and additive bilingualism while schools manage a Language of Learning and Teaching.',example:'Language support is a better response than treating home language as a reason for exclusion.',takeaway:'Connect language choice with access, support and equality.'},
+  {title:'Separate law from implementation',body:'A legal duty does not remove practical barriers such as classrooms, sanitation, transport or delayed district support.',example:'A rural Grade R plan needs responsible actors, resources and tracked steps.',takeaway:'Recommend a feasible action for each barrier.'},
+  {title:'Build the applied answer',body:'A strong response follows a repeatable route: rule, scenario fact, action and justification.',example:'Equality is affected by language-based exclusion; reconsider admission and provide language support to protect fair access.',takeaway:'Every recommendation should answer who does what, and why.'}
+ ],
+ Q2:[
+  {title:'Begin with one research problem',body:'A proposal starts with a focused educational issue that needs investigation.',example:'Grade 4 teachers experience persistent reading-comprehension difficulties in their classes.',takeaway:'Keep the population, place and problem stable.'},
+  {title:'Turn the issue into a neutral title',body:'The title names the study without assuming the result or blaming participants.',example:'Exploring Grade 4 teachers’ experiences of reading-comprehension difficulties.',takeaway:'A focused title anchors every later component.'},
+  {title:'Ask one main question',body:'Convert the title into an answerable question while keeping the same focus.',example:'What challenges do Grade 4 teachers experience when supporting reading comprehension?',takeaway:'Changing from a title to a question must not change the topic.'},
+  {title:'Mirror the question in the aim',body:'The aim states what the study will do. Use “To” plus a research verb and the same focus.',example:'To explore the challenges Grade 4 teachers experience when supporting reading comprehension.',takeaway:'Question asks; aim acts.'},
+  {title:'Break the study into aligned pairs',body:'Secondary questions divide the main problem. Objectives mirror those questions with action verbs.',example:'What strategies are used? becomes: To identify the strategies teachers use.',takeaway:'Each objective should clearly answer to one secondary question.'},
+  {title:'Choose evidence before method',body:'Experiences suggest a qualitative approach, numerical patterns suggest quantitative, and both suggest mixed methods.',example:'Detailed teacher experiences can be explored through semi-structured interviews.',takeaway:'Evidence needed leads to approach, then instrument.'},
+  {title:'Protect participants before collecting data',body:'School research needs approval, voluntary participation, privacy and protection from harm.',example:'With learners, plan for guardian consent, learner assent and extra care with sensitive topics.',takeaway:'Ethics is part of the design, not an afterthought.'}
+ ],
+ Q3:[
+  {title:'Find the barrier before choosing support',body:'A learner may understand a concept but struggle to express it in the Language of Learning and Teaching.',example:'A learner solves a diagram correctly but gives an incomplete English explanation.',takeaway:'Language difficulty is not automatically a learning disability.'},
+  {title:'Use the Language in Education Policy',body:'LiEP supports additive bilingualism: develop the Language of Learning and Teaching without devaluing a learner’s stronger language.',example:'Let learners build meaning in a familiar language, then scaffold reporting in the LoLT.',takeaway:'Use language as a resource for learning.'},
+  {title:'Teach language across the curriculum',body:'Language Across the Curriculum means every subject teacher teaches the language learners need in that subject.',example:'A Science teacher explicitly teaches terms, sentence frames and how to explain evidence.',takeaway:'Subject literacy is not only the language teacher’s job.'},
+  {title:'Make classroom participation safer',body:'Ridicule, fear and unfamiliar interaction rules can silence learners even when they understand the work.',example:'Stop mockery, clarify respectful discussion and provide low-risk ways to rehearse an answer.',takeaway:'Access includes emotional safety and participation.'},
+  {title:'Use practical scaffolds',body:'Visuals, vocabulary previews, modelling, peer rehearsal and purposeful translanguaging create routes into the same learning goal.',example:'Use a word bank and response frame before asking for an oral explanation.',takeaway:'Support access without lowering the outcome.'},
+  {title:'Use SIAS as a support process',body:'Screening, Identification, Assessment and Support helps identify barriers, plan support, monitor progress and involve support structures when needed.',example:'Document classroom support before making a careful referral to the School-Based Support Team.',takeaway:'SIAS supports learners; it is not a quick label.'}
+ ],
+ Q4:[
+  {title:'Begin with difference without stereotyping',body:'Culture may shape communication and expectations, but no learner should be reduced to a fixed cultural rule.',example:'Eye contact may be interpreted differently, so clarify expectations and learn about the individual.',takeaway:'Notice difference and preserve individual dignity.'},
+  {title:'Knowledge construction',body:'Learners examine how culture, perspective and power influence what is accepted as knowledge.',example:'Compare two accounts of the same historical event and ask whose perspectives shaped them.',takeaway:'The focus is how knowledge is made.'},
+  {title:'Content integration',body:'The teacher includes diverse voices, examples and materials in the ordinary curriculum.',example:'Use literature and examples from several traditions in the same unit.',takeaway:'Diversity belongs inside the curriculum, not in a token extra.'},
+  {title:'Prejudice reduction',body:'Teaching directly challenges stereotypes, bias and unsupported generalisations.',example:'Test a stereotype against evidence and discuss its harmful effects.',takeaway:'The focus is changing biased attitudes.'},
+  {title:'Equity pedagogy',body:'The teacher adapts teaching and assessment so learners have fair access to the same meaningful goals.',example:'Offer language scaffolds and different ways to demonstrate the same outcome.',takeaway:'Fair does not always mean identical.'},
+  {title:'Choose the approach from the teacher action',body:'Ask what the lesson is doing: examining perspective, adding voices, challenging bias or removing a learning barrier.',example:'Comparing accounts is knowledge construction; adding varied authors is content integration.',takeaway:'Name the approach and justify it with the scenario action.'}
+ ]
+};
+
+export const narrationText=(card:LearningCard)=>[card.title,card.body,card.example&&`For example: ${card.example}`,`Remember: ${card.takeaway}`].filter(Boolean).join('. ');
