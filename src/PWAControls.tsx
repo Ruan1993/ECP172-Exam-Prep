@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Download, RefreshCw, Share, X } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { ProgressTransfer } from './ProgressTransfer';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -117,5 +118,5 @@ function UpdateNotice() {
 }
 
 export function PWAControls() {
-  return <><InstallControl/><UpdateNotice/></>;
+  return <><ProgressTransfer/><InstallControl/><UpdateNotice/></>;
 }
