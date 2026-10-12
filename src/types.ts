@@ -1,5 +1,9 @@
 export type Area='Q1'|'Q2'|'Q3'|'Q4';
 export type Confidence='again'|'hard'|'got';
-export interface Progress{reviewed:string[];cards:Record<string,Confidence>;quiz:Record<string,boolean>;written:Record<string,Confidence>;mocks:{date:string;score:number}[]}
+export interface Progress{reviewed:string[];cards:Record<string,Confidence>;quiz:Record<string,boolean>;written:Record<string,Confidence>;mocks:{date:string;score:number}[];drafts?:Record<string,string>;confidence?:Record<string,number>;lastActivity?:{page:string;label:string;at:string}}
 export interface Flashcard{id:string;area:Area;topic:string;front:string;back:string}
 export interface Objective{id:string;area:Area;prompt:string;options:string[];answer:number;why:string;clue?:string}
+export interface Practice{id:string;area:Area;title:string;prompt:string;marks:number;hint:string;model:string;checklist:string[];source:string}
+export interface Scenario{id:string;area:Area;title:string;source:string;historical:boolean;text:string;originalQuestions:string[];adapted:Practice[];theory:string[]}
+export interface MockQuestion{area:Area;title:string;scenario?:string;parts:{label:string;prompt:string;marks:number;guide:string[]}[]}
+export interface MockExam{id:string;title:string;questions:MockQuestion[]}
