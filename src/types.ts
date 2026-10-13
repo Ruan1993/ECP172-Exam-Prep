@@ -1,6 +1,9 @@
 export type Area='Q1'|'Q2'|'Q3'|'Q4';
 export type Confidence='again'|'hard'|'got';
-export interface Progress{reviewed:string[];cards:Record<string,Confidence>;quiz:Record<string,boolean>;written:Record<string,Confidence>;mocks:{date:string;score:number}[];drafts?:Record<string,string>;confidence?:Record<string,number>;lastActivity?:{page:string;label:string;at:string}}
+export interface QuizAttempt{correct:boolean;firstCorrect:boolean;attempts:number;updatedAt:string}
+export interface ActivityRecord{completedAt:string;score?:number;total?:number}
+export interface MockAttempt{id:string;paperId:string;startedAt:string;submittedAt?:string;section:number;answers:Record<string,number>;revealed:number[];sectionScores:Record<string,number>;score?:number}
+export interface Progress{schemaVersion?:2;reviewed:string[];cards:Record<string,Confidence>;quiz:Record<string,boolean>;written:Record<string,Confidence>;mocks:{date:string;score:number}[];drafts?:Record<string,string>;confidence?:Record<string,number>;quizAttempts?:Record<string,QuizAttempt>;activities?:Record<string,ActivityRecord>;mockAttempts?:MockAttempt[];focusSessions?:{completedAt:string;minutes:number}[];voicePreference?:'default'|'female';soundEnabled?:boolean;lastActivity?:{page:string;label:string;at:string}}
 export interface Flashcard{id:string;area:Area;topic:string;front:string;back:string}
 export interface Objective{id:string;area:Area;prompt:string;options:string[];answer:number;why:string;clue?:string}
 export interface Practice{id:string;area:Area;title:string;prompt:string;marks:number;hint:string;model:string;checklist:string[];source:string}

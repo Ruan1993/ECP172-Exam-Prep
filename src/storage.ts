@@ -1,8 +1,9 @@
 import type{Progress}from'./types';
 const KEY='ecp172-progress-v1';
 export const BACKUP_KIND='ecp172-study-progress';
-export const empty:Progress={reviewed:[],cards:{},quiz:{},written:{},mocks:[],drafts:{},confidence:{}};
-export function load(){try{const old=JSON.parse(localStorage.getItem(KEY)||'{}');return{...empty,...old,drafts:old.drafts||{},confidence:old.confidence||{}}as Progress}catch{return{...empty}}}
+export const empty:Progress={schemaVersion:2,reviewed:[],cards:{},quiz:{},written:{},mocks:[],drafts:{},confidence:{},quizAttempts:{},activities:{},mockAttempts:[],focusSessions:[],voicePreference:'default',soundEnabled:true};
+export function migrateProgress(value:unknown):Progress{const old=value&&typeof value==='object'?value as Partial<Progress>:{};const quizAttempts={...(old.quizAttempts||{})};for(const[id,correct]of Object.entries(old.quiz||{}))if(!quizAttempts[id])quizAttempts[id]={correct,firstCorrect:correct,attempts:1,updatedAt:new Date(0).toISOString()};return{...empty,...old,schemaVersion:2,drafts:old.drafts||{},confidence:old.confidence||{},quizAttempts,activities:old.activities||{},mockAttempts:old.mockAttempts||[],focusSessions:old.focusSessions||[]}}
+export function load(){try{return migrateProgress(JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{return{...empty}}}
 export function save(p:Progress){localStorage.setItem(KEY,JSON.stringify(p))}
 
 export interface ProgressBackup{kind:typeof BACKUP_KIND;version:1;createdAt:string;progress:Progress}
@@ -15,5 +16,5 @@ export function parseBackup(value:unknown):ProgressBackup{
  const p=value.progress;
  if(!Array.isArray(p.reviewed)||!p.reviewed.every(x=>typeof x==='string')||!hasValues(p.cards,isConfidence)||!hasValues(p.quiz,x=>typeof x==='boolean')||!hasValues(p.written,isConfidence)||!Array.isArray(p.mocks)||!p.mocks.every(x=>isRecord(x)&&typeof x.date==='string'&&typeof x.score==='number'&&Number.isFinite(x.score))||(p.drafts!==undefined&&!hasValues(p.drafts,x=>typeof x==='string'))||(p.confidence!==undefined&&!hasValues(p.confidence,x=>typeof x==='number'&&Number.isFinite(x))))throw new Error('The backup is damaged or has an unsupported progress format.');
  if(p.lastActivity!==undefined&&(!isRecord(p.lastActivity)||typeof p.lastActivity.page!=='string'||typeof p.lastActivity.label!=='string'||typeof p.lastActivity.at!=='string'))throw new Error('The backup contains an invalid study position.');
- return{kind:BACKUP_KIND,version:1,createdAt:value.createdAt,progress:{...empty,...p,drafts:(p.drafts||{}) as Record<string,string>,confidence:(p.confidence||{}) as Record<string,number>} as Progress};
+ return{kind:BACKUP_KIND,version:1,createdAt:value.createdAt,progress:migrateProgress(p)};
 }
