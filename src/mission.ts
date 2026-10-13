@@ -10,3 +10,5 @@ export const pauseTimer=(timer:TimerState,now:number):TimerState=>{const remaini
 export const resumeTimer=(timer:TimerState,now:number):TimerState=>timer.remainingMs<=0?{...timer,status:'complete',endAt:null}:{...timer,endAt:now+timer.remainingMs,status:'running'};
 export const resetTimer=(durationMs:number):TimerState=>({durationMs,remainingMs:durationMs,endAt:null,status:'idle'});
 export const formatClock=(milliseconds:number)=>{const seconds=Math.ceil(Math.max(0,milliseconds)/1000),minutes=Math.floor(seconds/60);return`${String(minutes).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`};
+export type TimerKind='focus'|'break';
+export const completionAlert=(kind:TimerKind)=>kind==='break'?{title:'Break complete!',body:'Time to get back to studying.'}:{title:'Focus session complete!',body:'Great work! Take a break or continue studying.'};
