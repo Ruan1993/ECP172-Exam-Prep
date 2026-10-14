@@ -25,3 +25,9 @@
 [data-theme=dark] .hint{background:#fff8e8;color:#4b3710;border-color:#d59a2a}
 [data-theme=dark] .example small{display:block;margin:0 0 7px;font-weight:700;letter-spacing:.06em}
 [data-theme=dark] .example strong{display:block;line-height:1.45}
+
+/* Keep the responsive site menu scoped to the header. Activity navigation
+   remains in normal document flow on mobile. */
+@media(max-width:980px){
+  main nav{position:static;inset:auto;display:flex;background:transparent;padding:0;box-shadow:none}
+}
