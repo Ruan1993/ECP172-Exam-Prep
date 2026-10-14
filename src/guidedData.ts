@@ -1,8 +1,9 @@
 import type{Area}from'./types';
 
-export interface LearningCard{title:string;body:string;example?:string;takeaway:string}
+export interface LearningCard{title:string;body:string;example?:string;takeaway:string;why:string;connection:string;simpler:string;anotherExample:string;examAnswer:string}
 
-export const learningSequences:Record<Area,LearningCard[]>={
+type CoreCard=Pick<LearningCard,'title'|'body'|'example'|'takeaway'>;
+const baseSequences:Record<Area,CoreCard[]>={
  Q1:[
   {title:'Start with the learner’s right',body:'Education policy questions usually begin with a learner, a school decision and a right that may be affected.',example:'A school refuses admission because of a learner’s home language.',takeaway:'Identify the right and the exact scenario fact before naming policy.'},
   {title:'Use the Constitution as the foundation',body:'Equality, dignity and the right to education guide how school decisions should be judged.',example:'Ask whether the decision unfairly excludes or disadvantages the learner.',takeaway:'Name the principle, then connect it to the fact.'},
@@ -38,4 +39,13 @@ export const learningSequences:Record<Area,LearningCard[]>={
  ]
 };
 
-export const narrationText=(card:LearningCard)=>[card.title,card.body,card.example&&`For example: ${card.example}`,`Remember: ${card.takeaway}`].filter(Boolean).join('. ');
+const context:Record<Area,{why:string;connection:string;simpler:string;exam:string;example:string}>={
+ Q1:{why:'It helps you judge a school decision against learner rights and then recommend lawful, practical action.',connection:'This connects constitutional principles to education policy, school governance and implementation.',simpler:'First ask: Which learner right may be affected? Then ask: What should the school do fairly and lawfully?',exam:'In an examination answer, identify the relevant right or policy, apply it to a fact in the scenario, and justify a feasible action.',example:'A school reviews an admission decision, records its reasons and plans support that protects access.'},
+ Q2:{why:'A proposal is credible only when every part investigates the same problem and the method can produce the evidence needed.',connection:'The title, question, aim, objectives, approach, instrument and ethics form one aligned chain.',simpler:'Keep one topic all the way through: ask about it, state what you will do, and choose a suitable way to collect evidence.',exam:'A coherent proposal keeps the population, setting and problem aligned from the title through the research design and ethical plan.',example:'If the question asks about teacher experiences, interviews can gather detailed explanations from relevant teachers.'},
+ Q3:{why:'Correctly identifying the barrier prevents teachers from confusing language expression with a lack of subject understanding.',connection:'LiEP, Language Across the Curriculum, classroom scaffolding and SIAS all contribute to inclusive support.',simpler:'The learner may know the answer but need help expressing it in the teaching language. Support the language route without lowering the goal.',exam:'The teacher should identify the specific barrier, provide language and participation scaffolds, monitor progress and use support structures when needed.',example:'A learner first discusses a diagram with a peer, then uses an English word bank to report the same idea.'},
+ Q4:{why:'These distinctions help teachers respond to diversity without stereotyping and create fairer participation in ordinary lessons.',connection:'Knowledge, representation, attitudes and pedagogy are different but related parts of multicultural education.',simpler:'Ask what the teacher changes: how knowledge is examined, whose voices appear, which bias is challenged, or how access is improved.',exam:'The approach should be named and justified by linking it directly to the teacher action described in the scenario.',example:'A teacher includes several perspectives, challenges a stereotype with evidence and offers accessible ways to reach one outcome.'}
+};
+
+export const learningSequences=Object.fromEntries((Object.keys(baseSequences)as Area[]).map(area=>[area,baseSequences[area].map(card=>({...card,why:context[area].why,connection:context[area].connection,simpler:context[area].simpler,anotherExample:context[area].example,examAnswer:`${card.takeaway} ${context[area].exam}`}))]))as Record<Area,LearningCard[]>;
+
+export const narrationText=(card:LearningCard)=>[card.title,card.body,card.example&&`For example: ${card.example}`,`Why it matters: ${card.why}`,`Remember: ${card.takeaway}`].filter(Boolean).join('. ');
