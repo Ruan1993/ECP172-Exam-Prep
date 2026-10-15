@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Download, RefreshCw, Share, X } from 'lucide-react';
+import { ReadingProgressTransfer } from './ReadingProgressTransfer';
 import { useRegisterSW } from 'virtual:pwa-register/react';
-import { ProgressTransfer } from './ProgressTransfer';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -62,7 +62,7 @@ function InstallControl() {
       <section className="pwa-dialog" role="dialog" aria-modal="true" aria-labelledby="ios-install-title" onClick={event => event.stopPropagation()}>
         <button className="pwa-close" aria-label="Close installation help" onClick={() => setShowIOSHelp(false)}><X/></button>
         <div className="pwa-dialog-icon"><Share/></div>
-        <h2 id="ios-install-title">Install ECP172 Exam Prep</h2>
+        <h2 id="ios-install-title">Install ECP172 Learn First</h2>
         <p>Open this site in Safari, tap <b>Share</b>, then choose <b>Add to Home Screen</b>.</p>
         <button className="primary" onClick={() => setShowIOSHelp(false)}>Got it</button>
       </section>
@@ -109,7 +109,7 @@ function UpdateNotice() {
     <div className="pwa-notice-mark"><RefreshCw/></div>
     <div>
       <b>{needRefresh ? 'New version available' : 'Ready for offline study'}</b>
-      <p>{needRefresh ? 'Update when you have finished your current answer.' : 'This study app can now open without a connection.'}</p>
+      <p>{needRefresh ? 'Update when you have finished reading your current card.' : 'This study app can now open without a connection.'}</p>
       {needRefresh
         ? <div className="pwa-notice-actions"><button className="primary" onClick={() => updateServiceWorker(true)}>Update now</button><button onClick={() => setSnoozed(true)}>Later</button></div>
         : <button onClick={() => setOfflineReady(false)}>Dismiss</button>}
@@ -118,5 +118,5 @@ function UpdateNotice() {
 }
 
 export function PWAControls() {
-  return <><ProgressTransfer/><InstallControl/><UpdateNotice/></>;
+  return <><ReadingProgressTransfer/><InstallControl/><UpdateNotice/></>;
 }

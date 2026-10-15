@@ -10,9 +10,9 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         id: '/',
-        name: 'ECP172 Exam Prep',
-        short_name: 'ECP172',
-        description: 'Interactive ECP172 final examination study app',
+        name: 'ECP172 Learn First',
+        short_name: 'Learn First',
+        description: 'A calm, interactive ECP172 study book with full worked answers',
         lang: 'en-ZA',
         start_url: '/',
         scope: '/',
