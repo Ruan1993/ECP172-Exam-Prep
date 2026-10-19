@@ -49,7 +49,7 @@ test('Flashcards replace revision navigation, manual flips stay silent, and lega
  const saved={ratings:{'q4-b':'later'},position:{q1:0,q2:0,q3:1,q4:0},lastQuestion:'q3',revision:{ratings:{'rev-q1-rights':'understood','rev-q1-religion':'later'}}};
  localStorage.setItem('ecp172-learn-first-v1',JSON.stringify(saved));
  host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;highlights.clear();
- const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  try{
   await act(async()=>root.render(<React.StrictMode><App/><ReaderPlayer controller={c}/></React.StrictMode>));
   assert.equal(textButton('Revise later'),undefined);await click(textButton('Flashcards'));assert.equal(win.location.hash,'#flashcards');
@@ -72,7 +72,7 @@ test('Flashcards replace revision navigation, manual flips stay silent, and lega
 test('manual flashcard filters and finite sessions present each selected card once with hidden answers',async()=>{
  const {Flashcards}=await import('../src/Flashcards');const {migrateReadingProgress}=await import('../src/readingProgress');const {flashcardBank}=await import('../src/flashcardBank');
  host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;
- const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  try{
   await act(async()=>root.render(<Flashcards onLearning={()=>{}}/>));
   for(const filter of ['Q1 only','Q2 only','Q3 only','Q4 only','All content combined (Q1 + Q2 + Q3 + Q4)']){
@@ -95,11 +95,13 @@ test('listen mode waits for completed narration, counts five or ten seconds, rea
  t.mock.method(Math,'random',()=>.999);
  const state=migrateReadingProgress({revision:{ratings:{'rev-q1-rights':'later'}}}),original=JSON.stringify(state);
  host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;highlights.clear();t.mock.timers.enable({apis:['setTimeout','Date']});
- const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  const finish=async()=>{let count=0;while(c.status==='Speaking'){assert.ok(++count<100);await act(async()=>said.at(-1).onend())}};
  try{
   await act(async()=>root.render(<><Flashcards onLearning={()=>{}}/><ReaderPlayer controller={c}/></>));
   await click(textButton('Q1 only'));await click(textButton('Listen'));assert.equal(c.status,'Idle');assert.equal(host.querySelector('#fc-answer'),null);
+  const toolbar=host.querySelector('[role=toolbar][aria-label="Flashcard playback"]')!;assert.ok(toolbar);
+  assert.deepEqual(Array.from(toolbar.querySelectorAll('button')).map(b=>b.getAttribute('aria-label')),['Repeat','Play','Next','Stop']);assert.ok(Array.from(toolbar.querySelectorAll('button')).every(b=>b.title&&b.querySelector('svg[aria-hidden="true"]')));
   await click(textButton('Play'));assert.equal(c.status,'Speaking');assert.equal(document.querySelector('.reader-player'),null);assert.equal(host.querySelector('.fc-countdown'),null);
   await act(async()=>said.at(-1).onboundary({name:'word',charIndex:0,charLength:5}));assert.equal(highlights.size,0);assert.equal(host.querySelector('.reading-active'),null);
   await act(async()=>t.mock.timers.tick(20000));assert.equal(host.querySelector('#fc-answer'),null);
@@ -124,7 +126,7 @@ test('listen mode waits for completed narration, counts five or ten seconds, rea
 test('flashcard speech errors, backgrounding, mode/filter changes and unmount never leak playback or reveal early',async(t)=>{
  const {Flashcards}=await import('../src/Flashcards');const {migrateReadingProgress}=await import('../src/readingProgress');
  host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;t.mock.timers.enable({apis:['setTimeout','Date']});
- const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  try{
   await act(async()=>root.render(<Flashcards onLearning={()=>{}}/>));await click(textButton('Listen'));await click(textButton('Play'));const stale=said.at(-1);
   await act(async()=>stale.onerror({error:'not-allowed'}));assert.equal(c.status,'Error');assert.match(host.querySelector('.fc-listen')!.textContent!,/not-allowed/);await act(async()=>t.mock.timers.tick(20000));assert.equal(host.querySelector('#fc-answer'),null);
@@ -143,7 +145,7 @@ test('flashcard speech errors, backgrounding, mode/filter changes and unmount ne
 test('a complete listen session visits its selected deck once and stops without changing ratings',async(t)=>{
  const {Flashcards}=await import('../src/Flashcards');const {migrateReadingProgress}=await import('../src/readingProgress');const {flashcardBank}=await import('../src/flashcardBank');
  host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;t.mock.timers.enable({apis:['setTimeout','Date']});
- const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  const finish=async()=>{let count=0;while(c.status==='Speaking'){assert.ok(++count<100);await act(async()=>said.at(-1).onend())}};
  try{
   await act(async()=>root.render(<Flashcards onLearning={()=>{}}/>));
@@ -169,7 +171,7 @@ test('backup pickers allow provider MIME types but validate contents and require
  for(const {Component,key,backup,trigger,select,confirm} of cases){
   host=document.createElement('div');document.body.append(host);root=createRoot(host);
   const original=JSON.stringify({sentinel:'existing progress'});localStorage.setItem(key,original);
-  const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label);
+  const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label));
   try{
    await act(async()=>root.render(<Component/>));await click(textButton(trigger)!);
    const input=host.querySelector<HTMLInputElement>('input[type="file"]')!;
@@ -328,7 +330,7 @@ test('actual card and Q1–Q4/section navigation restore saved follow without au
  // The service-worker hook is build-generated. Its inert test replacement keeps this
  // focused on actual App navigation; the production build verifies PWA generation.
  const {default:App}=await import('../src/App');
- const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  for(const saved of [true,false]){
   await act(async()=>c.setFollow(saved));said.length=0;host=document.createElement('div');document.body.append(host);root=createRoot(host);
   await act(async()=>root.render(<React.StrictMode><App/><ReaderPlayer controller={c}/></React.StrictMode>));
@@ -349,7 +351,7 @@ test('persistent bottom card controls reuse real app navigation, stop speech and
  await act(async()=>c.configure({follow:false,rate:1.25,voiceURI:'za',volume:.4}));const preferences=JSON.stringify(c.preferences);
  said.length=0;host=document.createElement('div');document.body.append(host);root=createRoot(host);
  await act(async()=>root.render(<React.StrictMode><App/><ReaderPlayer controller={c}/></React.StrictMode>));
- const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  const position=()=>document.querySelector('.reader-card-position')!.textContent;
  try{
   await click(textButton('Start at Q1'));assert.ok(position()?.includes('Card 1 of 8'));assert.equal(button('Previous card').disabled,true);assert.equal(said.length,0);assert.equal(document.querySelectorAll('.reader-player').length,1);
@@ -386,7 +388,7 @@ test('six revised Q2 cards navigate, narrate, persist ratings and retain scenari
  localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q1-intro':'later','q2-a1':'later'},position:{q1:0,q2:12,q3:0,q4:0},lastQuestion:'q2'}));
  host=document.createElement('div');document.body.append(host);root=createRoot(host);
  await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
- const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  try{
   await click(textButton('Q2'));assert.match(document.querySelector('.reader-number')!.textContent!,/CARD 6 OF 6/);
   for(let i=5;i>0;i--)await click(textButton('Previous'));
@@ -411,7 +413,7 @@ test('actual Q4 cards render separate numbered concept blocks in both model answ
  const {default:App}=await import('../src/App');
  host=document.createElement('div');document.body.append(host);root=createRoot(host);
  await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
- const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  try{
   await click(textButton('Q4'));
   const select=async(label:string)=>{const item=Array.from(document.querySelectorAll('.outline-list button')).find(b=>b.textContent?.includes(label))!;await click(item)};
@@ -439,7 +441,7 @@ test('learning navigation scrolls once to the stable reading heading and restore
  win.scrollTo=((options:any)=>pageTops.push(options)) as any;
  host=document.createElement('div');document.body.append(host);root=createRoot(host);
  await act(async()=>root.render(<React.StrictMode><App/><ReaderPlayer controller={c}/></React.StrictMode>));
- const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>(b.textContent?.trim()===label||b.getAttribute('aria-label')===label))!;
  try{
   scrolls.length=0;pageTops.length=0;
   await click(textButton('Start at Q1'));
