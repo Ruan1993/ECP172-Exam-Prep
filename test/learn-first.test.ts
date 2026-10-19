@@ -9,7 +9,7 @@ const all = Object.values(data).flat();
 
 test('the only chapter order is Q1 then Q2 then Q3 then Q4',()=>{
  assert.deepEqual(Object.keys(data),['q1','q2','q3','q4']);
- for(const cards of Object.values(data)) assert.ok(cards.length>=7);
+ for(const cards of Object.values(data)) assert.ok(cards.length>=6);
 });
 
 test('every content card has stable identity and nonempty educational content',()=>{
@@ -21,9 +21,9 @@ test('every content card has stable identity and nonempty educational content',(
 test('the actual full worked answers are present in each chapter',()=>{
  const text=(q:string)=>data[q].flatMap(c=>c.body).join(' ');
  assert.match(text('q1'),/The principal and school management team should work with the district/);
- assert.match(text('q2'),/explanatory sequential design/);
- assert.match(text('q2'),/parent or guardian consent and learner assent/);
- assert.match(text('q2'),/purposive sampling/);
+ assert.match(text('q2'),/Mixed methods, combining numerical information/);
+ assert.match(text('q2'),/parental consent and learner assent/);
+ assert.match(text('q2'),/purposive sample/);
  assert.match(text('q3'),/A learner cannot participate confidently when peers ridicule/);
  assert.match(text('q4'),/Equity pedagogy requires teachers to adapt methods and assessment/);
 });

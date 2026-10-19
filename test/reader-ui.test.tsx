@@ -188,3 +188,29 @@ test('legacy Guided Learning bottom navigation keeps existing progress and compl
   const finish=Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Continue now')!;await click(finish);assert.equal(completed,1);assert.equal(c.status,'Idle');
  }finally{await cleanup()}
 });
+
+test('six revised Q2 cards navigate, narrate, persist ratings and retain scenario identity',async()=>{
+ const {default:App}=await import('../src/App');
+ localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q1-intro':'later','q2-a1':'later'},position:{q1:0,q2:12,q3:0,q4:0},lastQuestion:'q2'}));
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);
+ await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ try{
+  await click(textButton('Q2'));assert.match(document.querySelector('.reader-number')!.textContent!,/CARD 6 OF 6/);
+  for(let i=5;i>0;i--)await click(textButton('Previous'));
+  const titles:string[]=[];
+  for(let i=0;i<6;i++){
+   titles.push(document.querySelector('.lf-page-card h2')!.textContent!);
+   assert.match(document.querySelector('.reader-number')!.textContent!,new RegExp(`CARD ${i+1} OF 6`));
+   if(i===1||i===2)assert.equal(document.querySelector('.lf-page-card')!.getAttribute('data-scenario'),'a');
+   if(i===3||i===4)assert.equal(document.querySelector('.lf-page-card')!.getAttribute('data-scenario'),'b');
+   await click(document.querySelector('.reader-start')!);assert.equal(c.status,'Speaking');assert.ok(said.at(-1).text);
+   await click(textButton('I understand it'));
+   if(i<5){await click(textButton('Next card'));assert.equal(c.status,'Idle');}
+  }
+  assert.equal(new Set(titles).size,6);
+  const saved=JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!);
+  assert.equal(saved.position.q2,5);assert.equal(saved.ratings['q2-a-proposal'],'understood');assert.equal(saved.ratings['q1-intro'],'later');
+  await click(textButton('Continue to next question'));assert.match(document.querySelector('.reader-number')!.textContent!,/CARD 1 OF/);
+ }finally{await cleanup()}
+});

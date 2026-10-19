@@ -30,7 +30,7 @@ export const pastPaperSummaries = {
 } as const;
 export type PastPaperTopic = keyof typeof pastPaperSummaries;
 export const readingQuestionTopics:Readonly<Record<string,PastPaperTopic>> = {
- 'q1-school':'bela', 'q2-b1':'cyberbullying', 'q3-a':'multilingual', 'q3-d':'sias'
+ 'q1-school':'bela', 'q2-b-proposal':'cyberbullying', 'q3-a':'multilingual', 'q3-d':'sias'
 };
 export const guidedQuestionTopics:Readonly<Record<string,PastPaperTopic>> = {
  'Q1:4':'bela', 'Q2:5':'cyberbullying', 'Q2:6':'cyberbullying',

@@ -34,3 +34,13 @@ body{background:var(--lf-bg);font-family:'DM Sans','Nunito',system-ui,sans-serif
 [data-theme=dark] .lf-countdown{background:linear-gradient(110deg,#1a3c35,#3a3324);border-color:#355d50}[data-theme=dark] .lf-countdown h2{color:#e6f6ee}[data-theme=dark] .lf-countdown p{color:#c2d9cc}[data-theme=dark] .lf-countdown-icon,[data-theme=dark] .lf-countdown-unit{background:#17372f;border-color:#355d50}[data-theme=dark] .lf-countdown-unit strong{color:#a0ebc8}[data-theme=dark] .lf-countdown-unit span{color:#b0d5c4}
 @media(max-width:850px){.lf-countdown{align-items:stretch;flex-direction:column}.lf-countdown-units{width:100%}}
 @media(max-width:650px){.lf-countdown{padding:18px 15px}.lf-countdown-icon{height:43px;flex-basis:43px;font-size:1.5rem}.lf-countdown h2{font-size:1.28rem}.lf-countdown .lf-eyebrow{font-size:.56rem;letter-spacing:.06em}.lf-countdown-unit{min-width:0;padding:10px 4px}.lf-countdown-unit strong{font-size:1.48rem}.lf-countdown-unit span{font-size:.58rem}}
+
+/* Q2 scenarios remain distinguishable by labels as well as colour. */
+.lf-page-card[data-scenario=a]{border-top:5px solid #277563}
+.lf-page-card[data-scenario=b]{border-top:5px solid #7751a8}
+.lf-page-card[data-scenario=a] .lf-card-tag{background:#e2f3ec;color:#195746}
+.lf-page-card[data-scenario=b] .lf-card-tag{background:#eee5fa;color:#53317c}
+[data-theme=dark] .lf-page-card[data-scenario=a]{border-top-color:#7cc9a6}
+[data-theme=dark] .lf-page-card[data-scenario=b]{border-top-color:#c6a0f3}
+[data-theme=dark] .lf-page-card[data-scenario=a] .lf-card-tag{background:#214c40;color:#cbefdf}
+[data-theme=dark] .lf-page-card[data-scenario=b] .lf-card-tag{background:#45305e;color:#ead9ff}

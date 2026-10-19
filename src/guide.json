@@ -104,200 +104,124 @@
   ],
   "q2": [
     {
-      "id": "q2-intro",
-      "title": "What research proposals actually do",
+      "id": "q2-essentials",
+      "title": "Research Proposals — The Essentials",
       "kind": "intro",
       "body": [
-        "Memorise the logic, not the exact topic: educational issue → focused title → problem statement → main question → aim → secondary questions/objectives → approach and design → sampling → instruments → analysis → ethics → limitations. Do not invent research findings before collecting data.",
-        "Qualitative research explores experiences and meanings, often through interviews and thematic analysis. Quantitative research measures numerical patterns, often through surveys and descriptive statistics. Mixed methods combines both, but must explain why integration adds value."
+        "A research proposal describes a planned investigation, not completed research.",
+        "Title → Problem → Research question → Aim → Objectives → Approach → Participants → Data collection → Analysis → Ethics → Recommendations.",
+        "Qualitative — Experiences, interviews, observations and themes.",
+        "Quantitative — Numerical information, surveys, frequencies and percentages.",
+        "Mixed methods — Combines quantitative and qualitative evidence.",
+        "Population — The entire group being investigated.",
+        "Sample — Selected participants.",
+        "Data collection — How information is gathered.",
+        "Data analysis — How information is interpreted."
       ],
-      "tag": "RESEARCH WITHOUT THE PANIC",
-      "tip": "A research proposal is a plan, not a report of findings.",
+      "tag": "THE REUSABLE FRAMEWORK",
       "scene": ""
     },
     {
-      "id": "q2-types",
-      "title": "Three approaches, three purposes",
+      "id": "q2-a-intro",
+      "title": "Scenario A — Language Barriers: Introduction",
+      "kind": "intro",
+      "body": [
+        "At a rural South African secondary school, some Grade 8 learners struggle to understand English-language instructions and Social Sciences terminology.",
+        "QUALITATIVE CASE STUDY — This approach explores learners’ and teachers’ experiences in a particular school."
+      ],
+      "tag": "SCENARIO A · QUALITATIVE CASE STUDY",
+      "scene": "Scenario A — Grade 8 Social Sciences"
+    },
+    {
+      "id": "q2-a-proposal",
+      "title": "Scenario A — Complete Exam-Ready Proposal",
+      "kind": "proposal",
+      "body": [
+        "1. Title",
+        "Investigating language barriers affecting Grade 8 Social Sciences learners at a rural secondary school.",
+        "2. Problem",
+        "Some learners struggle to understand English instructions and subject terminology, which may affect participation and task completion.",
+        "3. Research question",
+        "How do language barriers affect Grade 8 learners' understanding and participation in Social Sciences?",
+        "4. Aim",
+        "To investigate language-related learning difficulties and identify suitable classroom support.",
+        "5. Objectives",
+        "Identify common language difficulties, explore learners' experiences and recommend teaching strategies.",
+        "6. Approach",
+        "A qualitative case study will explore learners' and teachers' experiences at one school.",
+        "7. Participants",
+        "A purposive sample of approximately 10–12 Grade 8 learners and two Social Sciences teachers.",
+        "8. Data collection",
+        "Semi-structured interviews and classroom observations.",
+        "9. Data analysis",
+        "Identify and group recurring responses and observations into themes.",
+        "10. Ethics",
+        "Obtain the necessary permissions, parental consent and learner assent. Ensure voluntary participation, confidentiality and secure data storage.",
+        "11. Expected contribution",
+        "Recommend clearer instructions, vocabulary support, visuals and appropriate multilingual teaching strategies."
+      ],
+      "tag": "SCENARIO A · COMPLETE MODEL ANSWER",
+      "scene": "Scenario A — Grade 8 Social Sciences"
+    },
+    {
+      "id": "q2-b-intro",
+      "title": "Scenario B — Cyberbullying: Introduction",
+      "kind": "intro",
+      "body": [
+        "This is a new and different scenario. A secondary school is concerned about cyberbullying and its possible effects on Grade 9 learners.",
+        "MIXED METHODS — Combines numerical information with learners’ experiences.",
+        "Questionnaires — Provide numerical information about reported cyberbullying.",
+        "Interviews — Explore learners’ experiences and support needs."
+      ],
+      "tag": "SCENARIO B · MIXED METHODS",
+      "scene": "Scenario B — Grade 9 Cyberbullying"
+    },
+    {
+      "id": "q2-b-proposal",
+      "title": "Scenario B — Complete Exam-Ready Proposal",
+      "kind": "proposal",
+      "body": [
+        "1. Title",
+        "Investigating cyberbullying among Grade 9 learners at a secondary school.",
+        "2. Problem",
+        "Cyberbullying may negatively affect learners' well-being and academic participation. The school needs to understand its extent and effects.",
+        "3. Research question",
+        "How common is cyberbullying among participating Grade 9 learners, and how does it affect their school experiences?",
+        "4. Aim",
+        "To investigate cyberbullying and identify possible support strategies.",
+        "5. Objectives",
+        "Identify common forms of cyberbullying, investigate its effects and recommend preventative measures.",
+        "6. Approach",
+        "Mixed methods, combining numerical information with learners' experiences.",
+        "7. Participants",
+        "Grade 9 learners completing a voluntary questionnaire and a small purposive sample participating in interviews.",
+        "8. Data collection",
+        "Anonymous questionnaires and semi-structured interviews.",
+        "9. Data analysis",
+        "Calculate questionnaire frequencies and percentages, identify interview themes and compare the findings.",
+        "10. Ethics",
+        "Obtain the necessary permissions, parental consent and learner assent. Ensure voluntary participation, confidentiality and appropriate safeguarding procedures.",
+        "11. Expected contribution",
+        "Recommend improved reporting, awareness and learner-support strategies."
+      ],
+      "tag": "SCENARIO B · COMPLETE MODEL ANSWER",
+      "scene": "Scenario B — Grade 9 Cyberbullying"
+    },
+    {
+      "id": "q2-final",
+      "title": "Q2 — Final Exam Revision",
       "kind": "concept",
       "body": [
-        "Qualitative: explore experiences and meanings through interviews, observations and themes.",
-        "Quantitative: measure counts, frequencies, percentages or patterns using numerical data.",
-        "Mixed methods: combine numerical patterns with personal explanations. Explain what each adds and how they connect."
+        "Research approaches — Qualitative = experiences and themes. Quantitative = numbers and percentages. Mixed methods = both.",
+        "Research terminology — Population = entire group. Sample = selected participants. Data collection = gathering information. Data analysis = interpreting information. Ethics = permission, consent, confidentiality and protection.",
+        "Exam technique — Read the actual question carefully. Answer only the requested components. Use the marks to judge the level of detail.",
+        "Adapt the proposal to the given scenario. Justify the research approach briefly. Never invent findings before conducting research.",
+        "Use the 11 headings as a revision framework, not a guaranteed marking memorandum.",
+        "Scenario A — Language barriers → Qualitative → Interviews/observations → Themes.",
+        "Scenario B — Cyberbullying → Mixed methods → Questionnaires/interviews → Percentages/themes."
       ],
-      "tag": "CHOOSE THE RIGHT TOOL",
-      "tip": "Do not choose mixed methods just because it sounds more advanced.",
+      "tag": "FINAL EXAM REVISION",
       "scene": ""
-    },
-    {
-      "id": "q2-a1",
-      "title": "The problem and purpose",
-      "kind": "proposal",
-      "body": [
-        "Illustrative examination prompt: A rural secondary school reports that Grade 8 learners struggle to understand English-language instructions in Social Sciences. Develop a feasible research proposal to investigate the problem and identify appropriate classroom support.",
-        "1. Research title",
-        "Investigating the effects of language barriers on Grade 8 learners’ understanding of Social Sciences instructions at a rural South African secondary school.",
-        "2. Background and problem statement",
-        "Language plays an important role in teaching and learning because learners must understand instructions, subject terminology and assessment questions before they can demonstrate their knowledge. At the selected rural school, some Grade 8 learners use an African language as their home language but receive Social Sciences instruction mainly in English. Teachers report that these learners sometimes misunderstand written tasks, participate less frequently in discussions and produce incomplete answers. However, it is not yet clear whether language barriers are the main cause or how learners and teachers experience these difficulties. This study will investigate the nature of the barriers and identify practical strategies to improve access to learning. The study will not assume that language is the only explanation for poor performance.",
-        "3. Main research question",
-        "How do English-language instructional barriers influence Grade 8 learners’ understanding and participation in Social Sciences at the selected rural secondary school?"
-      ],
-      "tag": "PROPOSAL A · 1/5",
-      "tip": "Find the research focus before choosing methods.",
-      "scene": "Grade 8 Social Sciences: English-language instructions in a rural school"
-    },
-    {
-      "id": "q2-a2",
-      "title": "Questions that guide the study",
-      "kind": "proposal",
-      "body": [
-        "4. Secondary research questions",
-        "Which classroom instructions and Social Sciences terms do learners find most difficult to understand?",
-        "How do teachers and learners describe the effects of these barriers on participation and task completion?",
-        "Which language-support strategies are currently used, and how do learners experience them?",
-        "5. Research aim and objectives",
-        "The aim is to explore how language-related barriers affect learning in Grade 8 Social Sciences and to recommend feasible support strategies. The objectives are to identify common language difficulties; describe learners’ and teachers’ experiences; examine current instructional practices; and propose practical improvements grounded in the findings.",
-        "6. Significance of the study",
-        "The findings may help Social Sciences teachers adapt explanations, introduce vocabulary scaffolding and use multilingual resources where appropriate. School leaders may use the findings to guide teacher development and support planning. Learners could benefit from clearer instructions and more equitable opportunities to participate. Because the research is conducted at one school, the findings will provide context-specific insights rather than represent all South African schools."
-      ],
-      "tag": "PROPOSAL A · 2/5",
-      "tip": "Each secondary question should connect to an objective.",
-      "scene": "Grade 8 Social Sciences: English-language instructions in a rural school"
-    },
-    {
-      "id": "q2-a3",
-      "title": "The research design and participants",
-      "kind": "proposal",
-      "body": [
-        "7. Research approach and design",
-        "I would use a qualitative approach within a small-scale case study design. This is suitable because the purpose is to understand learners’ and teachers’ experiences of language barriers in a real classroom setting rather than to calculate a national prevalence rate. A case study permits detailed examination of one school using several sources of evidence. A limitation is that findings cannot automatically be generalised to other schools.",
-        "8. Population and sampling",
-        "The population consists of Grade 8 Social Sciences learners and teachers at the school. I would use purposive sampling to invite two Social Sciences teachers and approximately 10–12 Grade 8 learners with varied language backgrounds and classroom experiences. Selection would aim for a range of perspectives rather than only learners with low marks. The final sample would depend on school permission, parental consent and learner assent. A small purposive sample is appropriate for in-depth qualitative investigation but limits generalisation."
-      ],
-      "tag": "PROPOSAL A · 3/5",
-      "tip": "Case study + purposive sampling suit detailed local experiences.",
-      "scene": "Grade 8 Social Sciences: English-language instructions in a rural school"
-    },
-    {
-      "id": "q2-a4",
-      "title": "Collecting and interpreting evidence",
-      "kind": "proposal",
-      "body": [
-        "9. Data collection",
-        "First, I would conduct semi-structured teacher interviews about instructional language, common misunderstandings and support strategies. Second, I would use short, age-appropriate learner interviews or small-group discussions to explore which instructions and terms are confusing. Third, with permission, I would observe selected Social Sciences lessons using a structured observation checklist to note explanation techniques, learner questions and participation. Finally, I would examine anonymised examples of classroom tasks to identify recurring instruction-related difficulties. Using several methods enables triangulation: I can compare what participants report with what occurs during lessons and appears in classroom work.",
-        "10. Data analysis",
-        "I would transcribe or summarise interviews accurately, organise observation notes and read the data repeatedly. I would assign codes to recurring ideas such as unfamiliar vocabulary, difficulty interpreting instructions, code-switching and visual support. Related codes would be grouped into themes. I would compare themes across learner interviews, teacher interviews, observations and classroom tasks, including evidence that challenges an initial interpretation. I would report themes using anonymised examples and connect them directly to the research questions."
-      ],
-      "tag": "PROPOSAL A · 4/5",
-      "tip": "Methods must produce data that answer the questions.",
-      "scene": "Grade 8 Social Sciences: English-language instructions in a rural school"
-    },
-    {
-      "id": "q2-a5",
-      "title": "Ethics and sensible limitations",
-      "kind": "proposal",
-      "body": [
-        "11. Ethical considerations",
-        "Before collecting data, I would seek the required institutional ethics approval and permission from the relevant education authorities and school. Parents or guardians would provide informed consent for minors, and learners would provide age-appropriate assent. Participation would be voluntary, with no effect on marks or teacher relationships, and participants could withdraw according to the approved consent process. I would use pseudonyms, avoid collecting unnecessary personal details and store records securely. Interviews would be conducted respectfully and in an accessible language where feasible. I would not pressure learners to disclose embarrassing experiences or identify classmates.",
-        "12. Trustworthiness, limitations and risk management",
-        "Credibility would be strengthened through triangulation, careful interview questions and checking interpretations against the collected evidence. I would keep a record of sampling, procedures and coding decisions. Possible limitations include a small sample, researcher bias and learners giving answers they think teachers want to hear. To reduce these risks, I would make clear that there are no right or wrong answers, avoid interviewing learners in front of their teachers and use consistent prompts. Lesson observations would be scheduled to minimise disruption.",
-        "13. Expected contribution and conclusion",
-        "The study is expected to identify the language demands that learners find most difficult and highlight practical strategies, such as pre-teaching key terms, giving instructions in short steps, checking understanding, using visuals and allowing purposeful multilingual discussion. These are possibilities to investigate rather than predetermined findings. The research would contribute a grounded understanding of language barriers in one Grade 8 Social Sciences context and inform more inclusive teaching."
-      ],
-      "tag": "PROPOSAL A · 5/5",
-      "tip": "Protect minors, check trustworthiness, acknowledge limitations.",
-      "scene": "Grade 8 Social Sciences: English-language instructions in a rural school"
-    },
-    {
-      "id": "q2-adapt",
-      "title": "How to adapt, not memorise",
-      "kind": "concept",
-      "body": [
-        "How to adapt the proposal in the examination",
-        "Keep the same logical sequence: title → problem → main and secondary questions → aim and objectives → significance → approach/design → sample → data collection → analysis → ethics → limitations. Replace the school problem, participants, instruments and justifications to fit the scenario. Do not write the entire proposal if the examiner asks only for selected components; follow the mark allocation."
-      ],
-      "tag": "THE TRANSFER SKILL",
-      "tip": "Only write the proposal components the examiner actually asks for.",
-      "scene": ""
-    },
-    {
-      "id": "q2-b1",
-      "title": "Setting up the cyberbullying study",
-      "kind": "proposal",
-      "body": [
-        "1. Research title",
-        "Exploring the prevalence and effects of cyberbullying on Grade 9 learners at a South African secondary school: a mixed-methods study.",
-        "2. Background and problem statement",
-        "Cyberbullying refers to repeated or harmful behaviour through digital platforms, such as threatening messages, humiliation, exclusion or sharing embarrassing material. At the selected school, educators have raised concerns that online harassment may affect learner well-being, participation and attendance. However, the school does not yet know how widespread the problem is, how learners experience it or what support they consider useful. This gap makes a systematic study necessary. The study will examine both the frequency of reported experiences and learners’ explanations of their effects, rather than assuming that every learner is affected in the same way.",
-        "3. Main research question",
-        "How prevalent is cyberbullying among Grade 9 learners at the selected school, and how do learners describe its effects on their school experiences?",
-        "4. Secondary research questions",
-        "(a) What proportion of participating learners report experiencing or witnessing cyberbullying? (b) Which forms and digital contexts are most frequently reported? (c) How do affected learners describe consequences for attendance, concentration, relationships and sense of safety? (d) Which reporting and support measures do learners regard as accessible and effective?",
-        "5. Aim and objectives",
-        "The aim is to investigate cyberbullying experiences and identify practical school-based responses. The objectives are to measure reported experiences using an anonymous questionnaire; explore learners’ perceptions through voluntary interviews; compare the quantitative and qualitative findings; and recommend proportionate prevention, reporting and support strategies."
-      ],
-      "tag": "PROPOSAL B · 1/5",
-      "tip": "Separate what can be counted from what learners experience.",
-      "scene": "Grade 9 cyberbullying: a mixed-methods investigation"
-    },
-    {
-      "id": "q2-b2",
-      "title": "Design, purpose and sampling",
-      "kind": "proposal",
-      "body": [
-        "6. Significance",
-        "The findings could help the school identify patterns that require attention, improve reporting procedures and plan digital citizenship lessons and learner support. Results could also guide parent communication and staff training. Because this is a single-school study, findings should not be generalised automatically to all South African schools.",
-        "7. Research approach and design",
-        "I would use a mixed-methods approach with an explanatory sequential design. First, an anonymous quantitative questionnaire would establish reported patterns and frequencies. Second, qualitative semi-structured interviews would explore why learners perceive particular experiences as harmful and what support they need. Combining both approaches is justified because numerical results answer “how common?”, while interviews help explain “how and why?”.",
-        "8. Population and sampling",
-        "The target population is Grade 9 learners enrolled at the selected school. For the questionnaire, I would invite all Grade 9 learners who have the necessary consent and assent, aiming for broad participation while reporting the actual response rate. For interviews, I would purposively recruit a small, diverse group of willing participants, without pressuring anyone to disclose personal experiences. This design may introduce non-response and selection bias, which must be acknowledged.",
-        "9. Data collection",
-        "The anonymous questionnaire would use clearly worded items about experiences, frequency, perceived effects and awareness of reporting channels. It would avoid requesting names, screenshots or identifying details about alleged perpetrators. After reviewing the questionnaire patterns, I would conduct confidential, voluntary semi-structured interviews with appropriate safeguards. Interview questions might include: “What makes it difficult for learners to report online harassment?” and “What could the school do to make support more accessible?”"
-      ],
-      "tag": "PROPOSAL B · 2/5",
-      "tip": "The sequence is questionnaire first, interviews second.",
-      "scene": "Grade 9 cyberbullying: a mixed-methods investigation"
-    },
-    {
-      "id": "q2-b3",
-      "title": "What data do you collect and how?",
-      "kind": "proposal",
-      "body": [
-        "10. Data analysis",
-        "I would calculate frequencies and percentages for questionnaire responses and present them in tables or charts. I would not interpret correlations as proof of causation. Interview responses would be transcribed securely, coded and grouped into themes such as fear of retaliation, disrupted concentration or trusted adult support. Finally, I would integrate the findings: for example, if many respondents report not using school reporting channels, interview themes could help explain why.",
-        "11. Ethics and safeguarding",
-        "I would obtain institutional ethics approval and relevant school/education permissions before starting. Because participants are minors, I would obtain parent or guardian consent and learner assent, explain that participation is voluntary and allow withdrawal within the limits communicated during consent. Data would be de-identified, stored securely and reported in aggregate or anonymised form. Confidentiality has limits: if a learner discloses a serious risk of harm, I would follow approved safeguarding and referral procedures rather than promise absolute secrecy. Interview questions would avoid unnecessarily retraumatising learners, and counselling or support referral information would be available."
-      ],
-      "tag": "PROPOSAL B · 3/5",
-      "tip": "Numbers show the pattern; interviews help explain it.",
-      "scene": "Grade 9 cyberbullying: a mixed-methods investigation"
-    },
-    {
-      "id": "q2-b4",
-      "title": "Safeguarding and limits",
-      "kind": "proposal",
-      "body": [
-        "12. Limitations and conclusion",
-        "Self-reported answers may be affected by recall, embarrassment or fear of disclosure. A single-school sample limits transferability, and voluntary interview participants may not represent all learners. Nevertheless, combining broad questionnaire patterns with in-depth learner accounts can produce practical, context-sensitive recommendations for safer digital communication and responsive school support."
-      ],
-      "tag": "PROPOSAL B · 4/5",
-      "tip": "Never promise absolute secrecy when serious safety risks are disclosed.",
-      "scene": "Grade 9 cyberbullying: a mixed-methods investigation"
-    },
-    {
-      "id": "q2-b5",
-      "title": "Two exam-ready explanations",
-      "kind": "proposal",
-      "body": [
-        "Exam-style model answer: Why mixed methods? (illustrative 8 marks)",
-        "A mixed-methods approach is appropriate because cyberbullying has both measurable and experiential dimensions. A questionnaire can estimate how many participating learners report cyberbullying, which forms occur and how frequently incidents are reported. However, these numbers alone cannot explain why learners may avoid reporting incidents or how online harassment affects their sense of safety. Semi-structured interviews allow learners to explain these experiences in their own words. By comparing statistical patterns with interview themes, the researcher can develop a fuller understanding and make better-informed recommendations. The approach also has limitations: it takes more time, requires careful integration of two data types and may still be affected by response bias.",
-        "Exam-style model answer: Ethics (illustrative 6 marks)",
-        "Researching cyberbullying with school learners requires particular care because participants are minors and may disclose distressing experiences. The researcher must obtain relevant approval, parental or guardian consent and learner assent. Participation must be voluntary, and learners should know they can decline questions without punishment. The researcher should remove identifying information and store responses securely to reduce the risk of retaliation. Confidentiality must be explained accurately, including when serious safeguarding concerns require referral. Finally, questions should be sensitive and learners should have access to appropriate support if the research causes distress.",
-        "What to learn, not merely memorise",
-        "Understand the difference between quantitative data (counts, frequencies, percentages) and qualitative data (meanings, experiences, themes); explain why a mixed-methods design combines them; distinguish population from sample, sampling from data collection, and consent from confidentiality; and practise adapting this proposal to a different school issue. The examiner may ask only selected components, not an entire proposal."
-      ],
-      "tag": "PROPOSAL B · 5/5",
-      "tip": "These are complete examples of how to justify methods and ethics.",
-      "scene": "Grade 9 cyberbullying: a mixed-methods investigation"
     }
   ],
   "q3": [
