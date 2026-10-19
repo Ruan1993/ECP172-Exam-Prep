@@ -11,14 +11,13 @@
 .revision-card{background:var(--lf-paper);border:1px solid var(--lf-border);padding:clamp(22px,4vw,40px);border-radius:22px;box-shadow:0 12px 35px #17314a0c;animation:revision-enter .48s cubic-bezier(.2,.7,.2,1) both}
 .revision-card h2{font:700 clamp(1.5rem,3vw,2rem)/1.35 'DM Sans',sans-serif;margin:15px 0 18px;color:var(--lf-ink);animation:revision-enter .5s .07s both}
 .revision-card h2:focus{outline:none}.revision-card h2:focus-visible{outline:3px solid var(--lf-teal);outline-offset:6px}
-.revision-think{font-size:.95rem;color:var(--lf-sub);line-height:1.7;animation:revision-enter .5s .13s both}
 .revision-tools,.revision-rating>div,.revision-navigation{display:flex;gap:12px;flex-wrap:wrap}
 .lf-main .revision-space button{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease}
 .revision-tools{margin:24px 0 0}.revision-source-note{font-size:.8rem;color:var(--lf-teal);font-weight:650}
 .revision-hint{margin-top:22px;padding:18px 20px;background:var(--lf-sky);border:1px solid var(--lf-border);border-radius:12px;animation:revision-enter .3s ease both}
 .revision-hint h3{font-size:.9rem;margin:0 0 9px}.revision-hint p{margin:0;font-size:.95rem;line-height:1.65}
 .revision-answer{margin-top:28px;padding-top:24px;border-top:1px solid var(--lf-border);transform-origin:top;animation:answer-unfold .52s cubic-bezier(.2,.7,.2,1) both}
-.revision-answer h3{font-size:1.1rem;color:var(--lf-teal)}.revision-answer .revision-answer-note{font-size:.85rem;color:var(--lf-sub);line-height:1.6}
+.revision-answer h3{font-size:1.1rem;color:var(--lf-teal)}
 .revision-points{list-style:none;padding-left:0;margin:22px 0}.revision-points>li{padding-left:6px;margin:0 0 18px;animation:revision-enter .4s ease both;animation-delay:calc(var(--point-order)*65ms + 100ms)}
 .revision-points>li::marker{color:var(--lf-teal);font-weight:800}.revision-points p{margin:0;font-size:1rem;line-height:1.8}.revision-points>li:has(.learning-concept){padding-left:0}
 .revision-remember{padding:18px 20px;background:var(--lf-sky);border-radius:12px}.revision-remember h4{font-size:.83rem;margin:0 0 8px}.revision-remember p{margin:0;font-size:.94rem}

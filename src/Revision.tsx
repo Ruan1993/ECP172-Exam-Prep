@@ -37,11 +37,10 @@ export function Revision({state,setState,onLearning}:Props){
   <article ref={root} key={`revision-question-${question.id}`} className="revision-card" aria-labelledby="revision-question">
    <span className="lf-eyebrow">{session.section.toUpperCase()} · ACTIVE RECALL</span>
    <h2 id="revision-question" ref={heading} tabIndex={-1}>{question.prompt}</h2>
-   <p className="revision-think">Pause here. What would you include in an exam answer?</p>
    {bookmarked.length>0&&!rating&&<div className="revision-source-note">Prioritised from your learning-card bookmarks.</div>}
    <div className="revision-tools"><button aria-expanded={hint} aria-controls="revision-hint" onClick={()=>{speech().stop();setHint(v=>!v)}}><Lightbulb size={18}/>{hint?'Hide hint':'Show hint'}</button><button className="lf-primary answer-toggle" aria-expanded={revealed} aria-controls="revision-answer-panel" onClick={()=>{speech().clearSession();setRevealed(v=>!v)}}>{revealed?'Hide Answer':'Reveal Answer'} <ArrowRight size={18}/></button></div>
    {hint&&<div id="revision-hint" className="revision-hint"><h3>A starting point</h3><p>{question.hint}</p></div>}
-   <div id="revision-answer-panel" hidden={!revealed}>{revealed&&<section id="revision-answer" className="revision-answer reading-prose" aria-label="Model answer"><h3 ref={answerHeading} tabIndex={-1}>Model answer</h3><p className="revision-answer-note">Compare your reasoning with these key points. Equivalent accurate wording is welcome.</p>
+   <div id="revision-answer-panel" hidden={!revealed}>{revealed&&<section id="revision-answer" className="revision-answer reading-prose" aria-label="Model answer"><h3 ref={answerHeading} tabIndex={-1}>Model answer</h3>
     <ol className="revision-points">{question.points.map((point,i)=>{const concept=conceptForText(point);return <li key={i} style={{'--point-order':i} as React.CSSProperties}>{concept?<p className="learning-concept" data-concept={concept.id} data-tone={concept.tone}>{point}</p>:<p>{!hasConceptNumbers&&`${i+1}. `}{point}</p>}</li>})}</ol>
     {question.remember&&<div className="revision-remember"><h4>Remember this</h4><p>{question.remember}</p></div>}
    </section>}</div>

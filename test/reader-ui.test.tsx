@@ -341,6 +341,43 @@ test('learning navigation scrolls once to the stable reading heading and restore
  }finally{await cleanup();win.scrollTo=originalScrollTo;reduced=false}
 });
 
+test('all 32 revision questions omit removed instructions from UI, speech and sentence navigation',async()=>{
+ const {Revision}=await import('../src/Revision');
+ const {revisionBank}=await import('../src/revisionBank');
+ const {migrateReadingProgress}=await import('../src/readingProgress');
+ const removed=['Pause here. What would you include in an exam answer?','Compare your reasoning with these key points. Equivalent accurate wording is welcome.'];
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ let checked=0;
+ try{
+  for(const section of ['q1','q2','q3','q4'] as const){
+   await act(async()=>root.render(<Revision key={section} state={migrateReadingProgress({lastQuestion:section})} setState={()=>{}} onLearning={()=>{}}/>));
+   for(let i=0;i<8;i++){
+    const question=revisionBank.filter(q=>q.section===section)[i];
+    assert.equal(host.querySelector('#revision-question')!.textContent,question.prompt);
+    for(const revealed of [false,true]){
+     if(revealed)await click(textButton('Reveal Answer'));
+     for(const text of removed)assert.ok(!host.textContent!.includes(text));
+     assert.equal(host.querySelector('.revision-think,.revision-answer-note'),null);
+     const sentences=readingSentences(host.querySelector('.revision-card')!).map(s=>s.text);
+     for(const text of removed)for(const sentence of sentences)assert.ok(!text.includes(sentence));
+     await click(host.querySelector('.reader-start')!);
+     assert.deepEqual(c.segments,sentences);
+     for(let index=0;index<c.segments.length;index++){
+      await act(async()=>c.selectSentence(index));
+      for(const text of removed)assert.ok(!text.includes(said.at(-1).text));
+     }
+     await act(async()=>c.stop());
+     if(revealed)assert.deepEqual(Array.from(host.querySelectorAll('.revision-points>li p')).map(p=>p.textContent!.replace(/^\d+\. /,'')),question.points.map(p=>p.replace(/^\d+\. /,'')));
+    }
+    await click(textButton('Hide Answer'));assert.equal(host.querySelector('#revision-answer'),null);
+    checked++;if(i<7)await click(textButton('Next question'));
+   }
+  }
+  assert.equal(checked,32);
+ }finally{await cleanup()}
+});
+
 test('Reveal Hide Reveal removes spoken answers and focus targets while preserving ratings',async()=>{
  const {default:App}=await import('../src/App');
  localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q4-b':'later'},position:{q1:0,q2:0,q3:0,q4:0},lastQuestion:'q4'}));
