@@ -8,6 +8,7 @@ import {readingSentences,sentenceWordRange,followScrollDelta} from '../src/readi
 import {boundaryWord} from '../src/speech';
 
 registerHooks({load(url,context,next){if(url.endsWith('.css'))return {format:'module',source:'',shortCircuit:true};return next(url,context)}});
+registerHooks({resolve(specifier,context,next){if(specifier==='virtual:pwa-register/react')return {url:'data:text/javascript,export function useRegisterSW(){return {needRefresh:[false,()=>{}],offlineReady:[false,()=>{}],updateServiceWorker:async()=>{}}}',shortCircuit:true};return next(specifier,context)}});
 const win=new Window({url:'http://localhost/'});
 for(const name of ['window','document','Node','Element','HTMLElement','HTMLDetailsElement','Text','NodeFilter','MutationObserver','MouseEvent','KeyboardEvent','Event','PointerEvent','ResizeObserver','localStorage','sessionStorage','FileReader','getComputedStyle']){
  Object.defineProperty(globalThis,name,{value:name==='window'?win:(win as any)[name],configurable:true,writable:true});
@@ -41,6 +42,121 @@ async function cleanup(){await act(async()=>{c.stop();root.unmount()});host.remo
 const button=(label:string)=>document.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
 async function click(element:Element){assert.ok(element);await act(async()=>element.dispatchEvent(new win.MouseEvent('click',{bubbles:true,clientX:20,clientY:910,button:0}) as any))}
 const highlightText=()=>highlights.get('reading-sentence')?.ranges[0].toString();
+
+test('Flashcards replace revision navigation, manual flips stay silent, and legacy ratings persist',async(t)=>{
+ const {default:App}=await import('../src/App');
+ t.mock.method(Math,'random',()=>.999);
+ const saved={ratings:{'q4-b':'later'},position:{q1:0,q2:0,q3:1,q4:0},lastQuestion:'q3',revision:{ratings:{'rev-q1-rights':'understood','rev-q1-religion':'later'}}};
+ localStorage.setItem('ecp172-learn-first-v1',JSON.stringify(saved));
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;highlights.clear();
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ try{
+  await act(async()=>root.render(<React.StrictMode><App/><ReaderPlayer controller={c}/></React.StrictMode>));
+  assert.equal(textButton('Revise later'),undefined);await click(textButton('Flashcards'));assert.equal(win.location.hash,'#flashcards');
+  assert.equal(host.querySelector('#fc-answer'),null);assert.equal(document.querySelector('.reader-player'),null);assert.equal(textButton('Show hint'),undefined);
+  assert.equal(host.querySelectorAll('.fc-filters button').length,5);
+  await click(textButton('Q1 only'));await click(textButton('Flip card'));assert.ok(host.querySelector('#fc-answer'));assert.equal(said.length,0);
+  assert.match(host.querySelector('#fc-question')!.textContent!,/constitutional rights/);
+  for(const label of ['Got it','Revise Again','I understand'])assert.equal(textButton(label),undefined);
+  assert.equal(host.querySelector('.fc-ratings,.fc-feedback,[role="progressbar"]'),null);
+  assert.match(host.querySelector('.fc-position')!.textContent!,/^Card 1 of \d+$/);
+  const detail=host.querySelector<HTMLDetailsElement>('.fc-detail')!;assert.ok(detail);await act(async()=>{detail.open=true});assert.match(detail.textContent!,/Section 9/);
+  assert.deepEqual(JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!),saved);
+  const question=host.querySelector('#fc-question')!.textContent,counter=host.querySelector('.fc-position')!.textContent;
+  await click(textButton('Repeat card'));assert.equal(host.querySelector('#fc-answer'),null);assert.equal(host.querySelector('#fc-question')!.textContent,question);assert.equal(host.querySelector('.fc-position')!.textContent,counter);
+  await click(textButton('Flip card'));await click(textButton('Hide answer'));assert.equal(host.querySelector('#fc-answer'),null);assert.equal(said.length,0);assert.equal(highlights.size,0);
+  await click(textButton('Q3'));assert.ok(document.querySelector('.lf-page-card'));assert.ok(document.querySelector('.reader-player'));
+ }finally{await cleanup()}
+});
+
+test('manual flashcard filters and finite sessions present each selected card once with hidden answers',async()=>{
+ const {Flashcards}=await import('../src/Flashcards');const {migrateReadingProgress}=await import('../src/readingProgress');const {flashcardBank}=await import('../src/flashcardBank');
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ try{
+  await act(async()=>root.render(<Flashcards onLearning={()=>{}}/>));
+  for(const filter of ['Q1 only','Q2 only','Q3 only','Q4 only','All content combined (Q1 + Q2 + Q3 + Q4)']){
+   await click(textButton(filter));assert.equal(host.querySelector('#fc-answer'),null);
+   if(filter.startsWith('Q'))assert.ok(host.querySelector('.fc-card .lf-eyebrow')!.textContent!.includes(filter.slice(0,2)));
+  }
+  await click(textButton('Q4 only'));const total=flashcardBank.filter(c=>c.section==='q4').length,seen=new Set<string>();
+  for(let i=0;i<total;i++){
+   const question=host.querySelector('#fc-question')!.textContent!;assert.ok(!seen.has(question));seen.add(question);
+   assert.equal(host.querySelector('#fc-answer'),null);await click(textButton('Flip card'));assert.ok(host.querySelector('#fc-answer'));
+   await click(textButton(i===total-1?'Finish session':'Next card'));
+  }
+  assert.equal(seen.size,total);assert.ok(host.querySelector('.fc-complete'));assert.equal(said.length,0);
+  await click(textButton('Start a new session'));assert.equal(host.querySelector('.fc-complete'),null);assert.equal(host.querySelector('#fc-answer'),null);
+ }finally{await cleanup()}
+});
+
+test('listen mode waits for completed narration, counts five or ten seconds, reads full answers and has no highlighting',async(t)=>{
+ const {Flashcards}=await import('../src/Flashcards');const {migrateReadingProgress}=await import('../src/readingProgress');const {flashcardBank}=await import('../src/flashcardBank');
+ t.mock.method(Math,'random',()=>.999);
+ const state=migrateReadingProgress({revision:{ratings:{'rev-q1-rights':'later'}}}),original=JSON.stringify(state);
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;highlights.clear();t.mock.timers.enable({apis:['setTimeout','Date']});
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const finish=async()=>{let count=0;while(c.status==='Speaking'){assert.ok(++count<100);await act(async()=>said.at(-1).onend())}};
+ try{
+  await act(async()=>root.render(<><Flashcards onLearning={()=>{}}/><ReaderPlayer controller={c}/></>));
+  await click(textButton('Q1 only'));await click(textButton('Listen'));assert.equal(c.status,'Idle');assert.equal(host.querySelector('#fc-answer'),null);
+  await click(textButton('Play'));assert.equal(c.status,'Speaking');assert.equal(document.querySelector('.reader-player'),null);assert.equal(host.querySelector('.fc-countdown'),null);
+  await act(async()=>said.at(-1).onboundary({name:'word',charIndex:0,charLength:5}));assert.equal(highlights.size,0);assert.equal(host.querySelector('.reading-active'),null);
+  await act(async()=>t.mock.timers.tick(20000));assert.equal(host.querySelector('#fc-answer'),null);
+  await finish();assert.match(host.querySelector('.fc-listen [role=status]')!.textContent!,/5 seconds/);assert.equal(host.querySelector('.fc-countdown')!.getAttribute('aria-hidden'),'true');assert.match(host.querySelector('.fc-countdown')!.getAttribute('style')!,/5s/);
+  await act(async()=>t.mock.timers.tick(1000));assert.match(host.querySelector('.fc-listen [role=status]')!.textContent!,/4 seconds/);
+  await click(textButton('Pause'));assert.equal(host.querySelector('.fc-countdown')!.getAttribute('data-paused'),'true');await act(async()=>t.mock.timers.tick(20000));assert.equal(host.querySelector('#fc-answer'),null);
+  await click(textButton('Play'));await act(async()=>t.mock.timers.tick(3999));assert.equal(host.querySelector('#fc-answer'),null);
+  await act(async()=>t.mock.timers.tick(1));assert.ok(host.querySelector('#fc-answer'));assert.equal(c.status,'Speaking');assert.equal(host.querySelector('.fc-countdown'),null);assert.equal(host.querySelector('.fc-front')!.getAttribute('inert'),'');assert.equal(host.querySelector('.fc-card')!.getAttribute('data-revealed'),'true');
+  const first=flashcardBank.find(card=>card.prompt===host.querySelector('#fc-question')!.textContent)!;
+  assert.equal(host.querySelector('.fc-answer>p')!.textContent,first.answer);assert.equal(c.segments.join(' '),first.answer);
+  await finish();await act(async()=>t.mock.timers.tick(1499));assert.equal(host.querySelector('#fc-question')!.textContent,first.prompt);
+  await act(async()=>t.mock.timers.tick(1));assert.notEqual(host.querySelector('#fc-question')!.textContent,first.prompt);assert.equal(host.querySelector('#fc-answer'),null);assert.equal(c.status,'Speaking');
+  const select=host.querySelector<HTMLSelectElement>('select[aria-label="Thinking time"]')!;
+  await act(async()=>{select.value='10';select.dispatchEvent(new win.Event('change',{bubbles:true}) as any)});
+  await finish();assert.match(host.querySelector('.fc-countdown')!.getAttribute('style')!,/10s/);await act(async()=>t.mock.timers.tick(9999));assert.equal(host.querySelector('#fc-answer'),null);await act(async()=>t.mock.timers.tick(1));assert.ok(host.querySelector('#fc-answer'));
+  assert.equal(highlights.size,0);assert.equal(JSON.stringify(state),original);
+  await click(textButton('Repeat'));assert.equal(host.querySelector('#fc-answer'),null);assert.equal(c.status,'Speaking');
+  await click(textButton('Stop'));const count=said.length;await act(async()=>t.mock.timers.tick(20000));assert.equal(c.status,'Idle');assert.equal(said.length,count);
+ }finally{await cleanup();t.mock.timers.reset()}
+});
+
+test('flashcard speech errors, backgrounding, mode/filter changes and unmount never leak playback or reveal early',async(t)=>{
+ const {Flashcards}=await import('../src/Flashcards');const {migrateReadingProgress}=await import('../src/readingProgress');
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;t.mock.timers.enable({apis:['setTimeout','Date']});
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ try{
+  await act(async()=>root.render(<Flashcards onLearning={()=>{}}/>));await click(textButton('Listen'));await click(textButton('Play'));const stale=said.at(-1);
+  await act(async()=>stale.onerror({error:'not-allowed'}));assert.equal(c.status,'Error');assert.match(host.querySelector('.fc-listen')!.textContent!,/not-allowed/);await act(async()=>t.mock.timers.tick(20000));assert.equal(host.querySelector('#fc-answer'),null);
+  await click(textButton('Play'));assert.equal(c.status,'Speaking');const question=host.querySelector('#fc-question')!.textContent;
+  Object.defineProperty(document,'hidden',{configurable:true,value:true});await act(async()=>document.dispatchEvent(new win.Event('visibilitychange') as any));assert.equal(c.status,'Paused');
+  await act(async()=>t.mock.timers.tick(20000));assert.equal(host.querySelector('#fc-question')!.textContent,question);assert.equal(host.querySelector('#fc-answer'),null);
+  Reflect.deleteProperty(document,'hidden');await click(textButton('Play'));await click(textButton('Next'));assert.notEqual(host.querySelector('#fc-question')!.textContent,question);
+  const count=said.length;await act(async()=>stale.onend());assert.equal(said.length,count);
+  await click(textButton('Q2 only'));assert.equal(c.status,'Idle');assert.equal(host.querySelector('#fc-answer'),null);await act(async()=>t.mock.timers.tick(20000));assert.equal(c.status,'Idle');
+  await click(textButton('Play'));await click(textButton('Manual'));assert.equal(c.status,'Idle');assert.ok(textButton('Flip card'));await click(textButton('Flip card'));assert.ok(host.querySelector('#fc-answer'));
+  await click(textButton('Listen'));assert.equal(host.querySelector('#fc-answer'),null);await click(textButton('Play'));await act(async()=>{while(c.status==='Speaking')said.at(-1).onend()});
+  const before=said.length;await cleanup();await act(async()=>t.mock.timers.tick(20000));assert.equal(said.length,before);assert.equal(c.status,'Idle');
+ }finally{if(host.isConnected)await cleanup();Reflect.deleteProperty(document,'hidden');t.mock.timers.reset()}
+});
+
+test('a complete listen session visits its selected deck once and stops without changing ratings',async(t)=>{
+ const {Flashcards}=await import('../src/Flashcards');const {migrateReadingProgress}=await import('../src/readingProgress');const {flashcardBank}=await import('../src/flashcardBank');
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;t.mock.timers.enable({apis:['setTimeout','Date']});
+ const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const finish=async()=>{let count=0;while(c.status==='Speaking'){assert.ok(++count<100);await act(async()=>said.at(-1).onend())}};
+ try{
+  await act(async()=>root.render(<Flashcards onLearning={()=>{}}/>));
+  await click(textButton('Q3 only'));await click(textButton('Listen'));await click(textButton('Play'));
+  const total=flashcardBank.filter(card=>card.section==='q3').length,seen=new Set<string>();
+  for(let i=0;i<total;i++){
+   const prompt=host.querySelector('#fc-question')!.textContent!;assert.ok(!seen.has(prompt));seen.add(prompt);assert.equal(host.querySelector('#fc-answer'),null);assert.equal(host.querySelector('.fc-celebration'),null);
+   await finish();await act(async()=>t.mock.timers.tick(5000));assert.ok(host.querySelector('#fc-answer'));await finish();await act(async()=>t.mock.timers.tick(1500));
+  }
+  assert.equal(seen.size,total);assert.ok(host.querySelector('.fc-complete'));assert.equal(host.querySelector('.fc-celebration')!.getAttribute('aria-hidden'),'true');assert.equal(host.querySelectorAll('.fc-celebration span').length,8);assert.equal(c.status,'Idle');
+  const count=said.length;await act(async()=>t.mock.timers.tick(60000));assert.equal(said.length,count);
+ }finally{await cleanup();t.mock.timers.reset()}
+});
 
 test('backup pickers allow provider MIME types but validate contents and require restore confirmation',async()=>{
  const {ReadingProgressTransfer}=await import('../src/ReadingProgressTransfer');
@@ -211,7 +327,6 @@ test('completed narration survives legacy card replacement and the next card can
 test('actual card and Q1–Q4/section navigation restore saved follow without autoplay',async()=>{
  // The service-worker hook is build-generated. Its inert test replacement keeps this
  // focused on actual App navigation; the production build verifies PWA generation.
- registerHooks({resolve(specifier,context,next){if(specifier==='virtual:pwa-register/react')return {url:'data:text/javascript,export function useRegisterSW(){return {needRefresh:[false,()=>{}],offlineReady:[false,()=>{}],updateServiceWorker:async()=>{}}}',shortCircuit:true};return next(specifier,context)}});
  const {default:App}=await import('../src/App');
  const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
  for(const saved of [true,false]){
@@ -221,7 +336,7 @@ test('actual card and Q1–Q4/section navigation restore saved follow without au
    await click(textButton('Start at Q1'));assert.equal(c.follow,saved);assert.equal(said.length,0);
    await click(document.querySelector('.reader-start')!);await act(async()=>win.dispatchEvent(new win.Event('wheel')) as any);assert.equal(c.follow,false);
    const count=said.length;await click(textButton('Next card'));assert.equal(c.follow,saved);assert.equal(c.status,'Idle');assert.equal(said.length,count);
-   for(const question of ['Q2','Q3','Q4','Overview','Revise later','Q1']){
+   for(const question of ['Q2','Q3','Q4','Overview','Flashcards','Q1']){
     await click(textButton(question));assert.equal(c.follow,saved);assert.equal(c.status,'Idle');assert.equal(said.length,count);
    }
    assert.equal(JSON.parse(localStorage.getItem('ecp172-read-aloud-v1')!).follow,saved);
@@ -315,56 +430,6 @@ test('actual Q4 cards render separate numbered concept blocks in both model answ
  }finally{await cleanup()}
 });
 
-test('active recall hides answers from DOM and speech, reveals hints and saves separate question ratings',async()=>{
- const {default:App}=await import('../src/App');
- localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q4-b':'later'},position:{q1:0,q2:0,q3:0,q4:0},lastQuestion:'q4'}));
- host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;
- await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
- const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
- try{
-  await click(textButton('Revise Again'));
-  assert.match(document.querySelector('#revision-question')!.textContent!,/Compare equality and equity/);
-  assert.equal(document.querySelector('#revision-answer'),null);assert.equal(document.querySelector('#revision-hint'),null);
-  assert.equal(textButton('Got it!'),undefined);
-  await click(button('Read current card'));
-  assert.ok(c.segments.some(t=>t.includes('Compare equality')));assert.ok(c.segments.every(t=>!t.includes('possess equal dignity')));
-  const stale=said.at(-1);await click(textButton('Show hint'));assert.equal(c.status,'Idle');assert.ok(document.querySelector('#revision-hint'));
-  await click(textButton('Reveal Answer'));assert.ok(document.querySelector('#revision-answer'));
-  assert.deepEqual(Array.from(document.querySelectorAll('#revision-answer [data-tone]')).map(p=>p.getAttribute('data-tone')),['yellow','green']);
-  await click(button('Read current card'));assert.ok(c.segments.some(t=>t.includes('possess equal dignity')));
-  await act(async()=>{const i=c.segments.findIndex(t=>t.includes('possess equal dignity'));c.selectSentence(i)});
-  assert.equal(document.querySelector('.reading-active')?.getAttribute('data-concept'),'equality');
-  await act(async()=>c.pause());assert.equal(document.querySelector('.reading-active'),null);
-  await click(textButton('Got it!'));
-  let saved=JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!);assert.equal(saved.ratings['q4-b'],'later');assert.equal(saved.revision.ratings['rev-q4-equality-equity'],'understood');
-  await click(textButton('Revise Again'));saved=JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!);assert.equal(saved.revision.ratings['rev-q4-equality-equity'],'later');
-  await click(document.querySelector('.reader-start')!);await act(async()=>c.setFollow(false,false));
-  await click(textButton('Next question'));assert.equal(c.status,'Idle');assert.equal(document.querySelector('#revision-answer'),null);assert.equal(document.querySelector('#revision-hint'),null);
-  const before=said.length;await act(async()=>stale.onend());assert.equal(said.length,before);
-  await click(button('Read current card'));assert.equal(c.follow,c.preferences.follow??true);
-  await click(textButton('Previous question'));assert.equal(document.querySelector('#revision-answer'),null);assert.match(document.querySelector('.revision-position')!.textContent!,/Queued/);
-  assert.equal(document.querySelectorAll('.reader-start').length,1);assert.equal(document.querySelectorAll('.reader-player').length,1);
-  await click(textButton('Overview'));assert.equal(c.status,'Idle');
-  await click(textButton('Revise Again'));assert.match(document.querySelector('#revision-question')!.textContent!,/Compare equality/);
- }finally{await cleanup()}
-});
-
-test('revision finish, all-understood replay and learning bookmarks retain distinct states',async()=>{
- const {default:App}=await import('../src/App');
- const {revisionBank}=await import('../src/revisionBank');
- localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q1-intro':'understood'},position:{q1:0,q2:0,q3:0,q4:0},lastQuestion:'q1',revision:{ratings:Object.fromEntries(revisionBank.filter(q=>q.section==='q1').map(q=>[q.id,'understood']))}}));
- host=document.createElement('div');document.body.append(host);root=createRoot(host);
- await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
- const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
- try{
-  await click(textButton('Start at Q1'));await click(textButton('Revise Again'));
-  assert.ok(document.querySelector('.revision-card'));assert.match(document.querySelector('.learning-feedback')!.textContent!,/Saved for revision/);assert.equal(JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!).ratings['q1-intro'],'later');
-  for(let i=0;i<7;i++)await click(textButton('Next question'));
-  await click(textButton('Finish section'));assert.ok(document.querySelector('.revision-complete'));
-  await click(textButton('Revise this section again'));assert.match(document.querySelector('.revision-position')!.textContent!,/Question 1 of 8/);assert.equal(document.querySelector('#revision-answer'),null);
- }finally{await cleanup()}
-});
-
 test('learning navigation scrolls once to the stable reading heading and restores URL navigation',async()=>{
  reduced=false;
  const {default:App}=await import('../src/App');
@@ -387,62 +452,4 @@ test('learning navigation scrolls once to the stable reading heading and restore
   win.history.replaceState(null,'','#q1/q1-rights');await act(async()=>win.dispatchEvent(new win.PopStateEvent('popstate')) as any);
   assert.match(document.querySelector('.lf-page-card>h2')!.textContent!,/Constitution/);assert.equal(document.activeElement,document.querySelector('.lf-page-card>h2'));assert.equal(scrolls.length,5);
  }finally{await cleanup();win.scrollTo=originalScrollTo;reduced=false}
-});
-
-test('all 32 revision questions omit removed instructions from UI, speech and sentence navigation',async()=>{
- const {Revision}=await import('../src/Revision');
- const {revisionBank}=await import('../src/revisionBank');
- const {migrateReadingProgress}=await import('../src/readingProgress');
- const removed=['Pause here. What would you include in an exam answer?','Compare your reasoning with these key points. Equivalent accurate wording is welcome.'];
- host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;
- const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
- let checked=0;
- try{
-  for(const section of ['q1','q2','q3','q4'] as const){
-   await act(async()=>root.render(<Revision key={section} state={migrateReadingProgress({lastQuestion:section})} setState={()=>{}} onLearning={()=>{}}/>));
-   for(let i=0;i<8;i++){
-    const question=revisionBank.filter(q=>q.section===section)[i];
-    assert.equal(host.querySelector('#revision-question')!.textContent,question.prompt);
-    for(const revealed of [false,true]){
-     if(revealed)await click(textButton('Reveal Answer'));
-     for(const text of removed)assert.ok(!host.textContent!.includes(text));
-     assert.equal(host.querySelector('.revision-think,.revision-answer-note'),null);
-     const sentences=readingSentences(host.querySelector('.revision-card')!).map(s=>s.text);
-     for(const text of removed)for(const sentence of sentences)assert.ok(!text.includes(sentence));
-     await click(host.querySelector('.reader-start')!);
-     assert.deepEqual(c.segments,sentences);
-     for(let index=0;index<c.segments.length;index++){
-      await act(async()=>c.selectSentence(index));
-      for(const text of removed)assert.ok(!text.includes(said.at(-1).text));
-     }
-     await act(async()=>c.stop());
-     if(revealed)assert.deepEqual(Array.from(host.querySelectorAll('.revision-points>li p')).map(p=>p.textContent!.replace(/^\d+\. /,'')),question.points.map(p=>p.replace(/^\d+\. /,'')));
-    }
-    await click(textButton('Hide Answer'));assert.equal(host.querySelector('#revision-answer'),null);
-    checked++;if(i<7)await click(textButton('Next question'));
-   }
-  }
-  assert.equal(checked,32);
- }finally{await cleanup()}
-});
-
-test('Reveal Hide Reveal removes spoken answers and focus targets while preserving ratings',async()=>{
- const {default:App}=await import('../src/App');
- localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q4-b':'later'},position:{q1:0,q2:0,q3:0,q4:0},lastQuestion:'q4'}));
- host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;
- await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
- const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
- try{
-  await click(textButton('Revise Again'));const toggle=textButton('Reveal Answer');
-  assert.equal(toggle.getAttribute('aria-expanded'),'false');const controlled=document.getElementById(toggle.getAttribute('aria-controls')!)!;assert.ok(controlled.hidden);
-  await click(toggle);const answer=document.querySelector('#revision-answer')!;assert.equal(toggle.getAttribute('aria-expanded'),'true');assert.ok(!controlled.hidden);
-  await click(textButton('Got it!'));const saved=localStorage.getItem('ecp172-learn-first-v1');
-  await click(document.querySelector('.reader-start')!);const index=c.segments.findIndex(t=>t.includes('possess equal dignity'));await act(async()=>c.selectSentence(index));
-  const old=said.at(-1);assert.equal(c.status,'Speaking');
-  await click(textButton('Hide Answer'));assert.equal(c.status,'Idle');assert.deepEqual(c.segments,[]);assert.ok(controlled.hidden);assert.equal(document.querySelector('#revision-answer'),null);assert.equal(answer.isConnected,false);
-  assert.equal(document.querySelector('.reading-active'),null);assert.notEqual(document.activeElement?.textContent,'Model answer');assert.equal(localStorage.getItem('ecp172-learn-first-v1'),saved);
-  const count=said.length;await act(async()=>{old.onend();c.restart();c.resume()});assert.equal(said.length,count);
-  await click(document.querySelector('.reader-start')!);assert.ok(c.segments.every(t=>!t.includes('possess equal dignity')));await act(async()=>c.stop());
-  await click(textButton('Reveal Answer'));assert.ok(document.querySelector('#revision-answer'));assert.notEqual(document.querySelector('#revision-answer'),answer);assert.equal(localStorage.getItem('ecp172-learn-first-v1'),saved);
- }finally{await cleanup()}
 });

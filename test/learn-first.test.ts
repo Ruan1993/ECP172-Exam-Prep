@@ -40,7 +40,7 @@ test('all theory precedes worked application within Q1 Q3 Q4',()=>{
 test('new study experience is informative, not a quiz/answer-builder',()=>{
  assert.doesNotMatch(app,/\bAnswerBuilder\b|\bExamChallenge\b|\bQuickRevision\b|\bMockExam\b|\bxp\b|\bTrophy\b/);
  assert.match(app,/I understand it/);
- assert.match(app,/Revise later/);
+ assert.match(app,/Flashcards/);
  assert.match(app,/ecp172-learn-first-v1/);
  assert.doesNotMatch(app,/localStorage\.removeItem\('ecp172-progress-v1'\)/);
 });

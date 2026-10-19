@@ -1,6 +1,6 @@
 import {useEffect,useRef,useSyncExternalStore} from 'react';
 
-export type ReaderCards={position:number;total:number;section:string;itemLabel?:'Card'|'Question';previous?:()=>void;next?:()=>void;nextLabel?:string;busy?:boolean;play:()=>void};
+export type ReaderCards={position:number;total:number;section:string;itemLabel?:'Card'|'Question';previous?:()=>void;next?:()=>void;nextLabel?:string;busy?:boolean;hidden?:boolean;play:()=>void};
 let current:ReaderCards|null=null;
 let owner:object|null=null;
 const listeners=new Set<()=>void>();

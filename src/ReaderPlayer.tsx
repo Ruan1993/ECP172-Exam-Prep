@@ -11,7 +11,7 @@ export function ReaderPlayer({controller=speech()}:{controller?:SpeechController
  const c=controller;useSyncExternalStore(c.subscribe,c.snapshot,c.snapshot);
  const [panel,setPanel]=useState<Panel>(null),[voices,setVoices]=useState<SpeechSynthesisVoice[]>([]);
  const bar=useRef<HTMLDivElement>(null),popover=useRef<HTMLDivElement>(null),volumeTrigger=useRef<HTMLButtonElement>(null),settingsTrigger=useRef<HTMLButtonElement>(null),returnFocus=useRef<HTMLElement|null>(null);
- const id=useId(),idle=c.status==='Idle',visible=!idle||!!cards,playing=c.status==='Speaking',volume=Math.round((c.preferences.volume??1)*100);
+ const id=useId(),idle=c.status==='Idle',visible=(!idle||!!cards)&&!cards?.hidden,playing=c.status==='Speaking',volume=Math.round((c.preferences.volume??1)*100);
  useEffect(()=>{
   const engine=window.speechSynthesis,load=()=>setVoices(engine?.getVoices()||[]);load();engine?.addEventListener('voiceschanged',load);
   return()=>engine?.removeEventListener('voiceschanged',load);

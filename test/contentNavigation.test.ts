@@ -8,8 +8,8 @@ Object.assign(globalThis,{window:win,document:win.document,getComputedStyle:win.
 test('stable card URLs identify valid cards and ignore invalid routes',()=>{
  assert.equal(routeHash({page:'q1',index:2}),'#q1/q1-school');
  assert.deepEqual(readRoute('#q1/q1-school'),{page:'q1',index:2});
- assert.deepEqual(readRoute('#revision'),{page:'later'});assert.deepEqual(readRoute('#overview'),{page:'home'});
- assert.equal(readRoute('#q1/not-a-card'),null);
+ assert.deepEqual(readRoute('#revision'),{page:'flashcards'});assert.deepEqual(readRoute('#overview'),{page:'home'});
+ assert.equal(readRoute('#q1/not-a-card'),null);assert.deepEqual(readRoute('#flashcards'),{page:'flashcards'});assert.equal(routeHash({page:'flashcards'}),'#flashcards');
 });
 test('heading scroll measures sticky header, focuses without scrolling twice and respects reduced motion',()=>{
  document.body.innerHTML='<header class="lf-header"></header><main><h2 tabindex="-1">Card heading</h2></main>';

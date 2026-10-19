@@ -54,9 +54,11 @@ test('revision reuses all seven numbered Q4 colour associations without unrelate
  assert.equal(conceptForText('The teacher adapts methods.'),undefined);
 });
 
-test('revision animation styles include entrances, unfolds, confirmations and reduced motion',()=>{
- const css=readFileSync(new URL('../src/revision.css',import.meta.url),'utf8');
- for(const name of ['revision-enter','answer-unfold','got-confirm','revision-turn'])assert.match(css,new RegExp('@keyframes '+name));
+test('flashcard animation respects reduced motion',()=>{
+ const css=readFileSync(new URL('../src/flashcards.css',import.meta.url),'utf8');
+ for(const name of ['fc-enter','fc-countdown','fc-confetti','fc-finish'])assert.match(css,new RegExp('@keyframes '+name));
+ assert.match(css,/backface-visibility:hidden/);assert.match(css,/rotateY\(180deg\)/);assert.match(css,/animation-play-state:paused/);assert.doesNotMatch(css,/\binfinite\b/);
+ assert.match(css,/\.fc-card-inner,\.fc-back\{transform:none!important/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);assert.match(css,/animation:none!important/);assert.match(css,/transition:none!important/);
  const app=readFileSync(new URL('../src/App.tsx',import.meta.url),'utf8');assert.match(app,/Learn it\. Understand it\. Remember it\. 🌿/);assert.doesNotMatch(app,/Made for understanding, not testing/);
 });
