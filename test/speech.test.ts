@@ -1,0 +1,18 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {SpeechController,segmentText,preferenceKey} from '../src/speech.ts';
+function setup(available=true){
+ const said:any[]=[];let cancels=0;const data=new Map([['ecp172-progress','existing scores'],['ecp172-learn-first-v1','existing ratings']]);
+ const storage={getItem:(k:string)=>data.get(k)??null,setItem:(k:string,v:string)=>{data.set(k,v)}};
+ const engine={cancel(){cancels++},resume(){},getVoices:()=>[{voiceURI:'za',lang:'en-ZA'}],speak(u:any){said.push(u)}};
+ const c=new SpeechController(available?engine as any:undefined,t=>({text:t}) as any,storage);
+ return {c,said,data,storage,cancels:()=>cancels};
+}
+test('starts with one short utterance and retains it until completion',()=>{const {c,said}=setup();c.play('First sentence. Second sentence.');assert.equal(c.status,'Speaking');assert.equal(said.length,1);assert.equal(c.utterance,said[0]);said[0].onend();assert.equal(said.length,2);assert.equal(c.index,1)});
+test('multiple pauses resume current segment without trusting native paused state',()=>{const {c,said}=setup();c.play('First. Second. Third.');said[0].onend();for(let i=0;i<4;i++){const old=said.at(-1);c.pause();assert.equal(c.status,'Paused');old.onend();old.onerror({error:'canceled'});assert.equal(c.index,1);c.resume();assert.equal(c.status,'Speaking');assert.equal(said.at(-1).text,'Second.')}assert.equal(c.index,1)});
+test('stop, restart, duplicate starts and navigation ignore stale callbacks',()=>{const {c,said}=setup();c.play('Old.');const old=said[0];c.play('New. Next.');old.onend();assert.equal(c.index,0);c.pause();c.restart();assert.equal(said.at(-1).text,'New.');const active=said.at(-1);c.stop();active.onend();assert.equal(c.status,'Idle');assert.equal(c.utterance,null)});
+test('finished runs completion only once',()=>{const {c,said}=setup();let completed=0;c.play('Done.',()=>completed++);said[0].onend();said[0].onend();assert.equal(c.status,'Finished');assert.equal(completed,1)});
+test('long prose preserves decimals and divides long sentences without losing words',()=>{const text='Dr. Smith teaches at 1.25 speed. '+('education '.repeat(200));const parts=segmentText(text);assert.ok(parts.length>5);assert.ok(parts.every(s=>s.length<=220));assert.equal(parts.join(' ').replace(/\s+/g,' ').trim(),text.trim())});
+test('preferences persist independently of study progress and pause at the current sentence',()=>{const {c,said,data,storage}=setup();c.play('One. Two.');said[0].onend();c.configure({rate:1.25,voiceURI:'za'});assert.equal(c.status,'Paused');c.resume();assert.equal(said.at(-1).text,'Two.');assert.equal(said.at(-1).rate,1.25);assert.equal(said.at(-1).voice.voiceURI,'za');assert.deepEqual(new SpeechController(undefined,()=>({}) as any,storage).preferences,{rate:1.25,voiceURI:'za'});assert.equal(data.get('ecp172-progress'),'existing scores');assert.equal(data.get('ecp172-learn-first-v1'),'existing ratings');assert.ok(data.has(preferenceKey))});
+test('unavailable API and engine errors are recoverable and explicit',()=>{const unavailable=setup(false);unavailable.c.play('Hello.');assert.equal(unavailable.c.status,'Error');const {c,said}=setup();c.play('Hello.');said[0].onerror({error:'network'});assert.equal(c.status,'Error');assert.match(c.message,/network/);c.resume();assert.equal(c.status,'Speaking')});
+test('storage errors and malformed preferences do not prevent reading',()=>{const c=new SpeechController(undefined,()=>({}) as any,{getItem(){throw Error()},setItem(){throw Error()}});assert.equal(c.preferences.rate,1);assert.doesNotThrow(()=>c.configure({rate:.75}))});

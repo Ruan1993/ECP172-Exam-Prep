@@ -1,3 +1,4 @@
+import {ReadingActivity} from './ReadAloud';
 import{useMemo,useState}from'react';
 import{ArrowRight,CheckCircle,Copy,RotateCcw,Trophy,XCircle}from'lucide-react';
 import{flashcards,objectives}from'./data';
@@ -11,7 +12,7 @@ const bank=buildQuestionBank(flashcards,objectives);
 
 function Complete({title,detail,onReplay,onContinue,continueLabel='Return to Dashboard',extra}:{title:string;detail:string;onReplay?:()=>void;onContinue:()=>void;continueLabel?:string;extra?:React.ReactNode}){return <section className="activity-complete" aria-live="polite"><Trophy/><small>ACTIVITY COMPLETE</small><h2>{title}</h2><p>{detail}</p>{extra}<p><b>Reward:</b> Knowledge Trail badge + 100 XP</p><div className="completion-actions">{onReplay&&<button onClick={onReplay}><RotateCcw/> Replay</button>}<button className="primary" onClick={onContinue}>{continueLabel} <ArrowRight/></button></div></section>}
 
-export function QuickRevision({progress,setProgress,onHome}:{progress:Progress;setProgress:Setter;onHome:()=>void}){
+function QuickRevisionContent({progress,setProgress,onHome}:{progress:Progress;setProgress:Setter;onHome:()=>void}){
  const[length,setLength]=useState(10),[session,setSession]=useState<ChoiceQuestion[]>([]),[index,setIndex]=useState(0),[pick,setPick]=useState<number>(),[results,setResults]=useState<{id:string;correct:boolean}[]>([]),[mistakes,setMistakes]=useState<ChoiceQuestion[]>([]),[confirmChange,setConfirmChange]=useState(false);
  const start=(items?:ChoiceQuestion[])=>{const weak=[...areas].sort((a,b)=>flashcards.filter(x=>x.area===a&&progress.cards[x.id]!=='got').length-flashcards.filter(x=>x.area===b&&progress.cards[x.id]!=='got').length).at(-1);setSession(items||createRevision(bank,length,weak));setIndex(0);setPick(undefined);setResults([]);setMistakes([]);setConfirmChange(false)};
  const select=()=>{setSession([]);setIndex(0);setPick(undefined);setResults([]);setMistakes([]);setConfirmChange(false)};
@@ -45,7 +46,7 @@ const builderSteps:Record<Area,BuilderStep[]>={
   {prompt:'Which set of examples applies all four approaches correctly?',choices:['Compare perspectives; include diverse texts; test stereotypes against evidence; provide accessible routes to one outcome.','Use one textbook; avoid discussing bias; use one response format; celebrate one festival.','Group learners by assumed culture; simplify outcomes; avoid disagreement; translate every lesson.'],answer:0,piece:'Examples: compare perspectives, include diverse materials, examine stereotypes using evidence and offer accessible routes to shared outcomes.',why:'Each example maps to a distinct approach without stereotyping learners.'},
   {prompt:'What shared purpose links the four approaches?',choices:['Promote equality, participation, critical understanding and fair opportunity in diversity.','Ensure cultural groups learn separately to prevent disagreement.','Replace subject knowledge with cultural activities.'],answer:0,piece:'Purpose: promote equality, critical understanding, participation and fair educational opportunity in diverse classrooms.',why:'Multicultural education changes knowledge, representation, bias and pedagogy in support of equitable participation.'}]};
 
-export function AnswerBuilder({progress,setProgress,onContinue}:{progress:Progress;setProgress:Setter;onContinue:(area:Area)=>void}){
+function AnswerBuilderContent({progress,setProgress,onContinue}:{progress:Progress;setProgress:Setter;onContinue:(area:Area)=>void}){
  return <AnswerCoach progress={progress} setProgress={setProgress} onContinue={onContinue}/>;
  /* Legacy choice data remains below temporarily for compatibility with older saved activity identifiers.
  const[area,setArea]=useState<Area>('Q1'),[step,setStep]=useState(0),[tries,setTries]=useState<Record<number,number>>({}),[done,setDone]=useState<number[]>([]),[feedback,setFeedback]=useState('');const steps=builderSteps[area],choiceOrders=useMemo(()=>builderSteps[area].map(x=>shuffle(x.choices.map((_,i)=>i))),[area]),complete=done.length===steps.length,accuracy=Math.round(done.filter(i=>tries[i]===1).length/steps.length*100),answer=steps.map(x=>x.piece).join('\n\n');
@@ -56,7 +57,7 @@ export function AnswerBuilder({progress,setProgress,onContinue}:{progress:Progre
 }
 
 const paperItems=(paper:number,area:Area)=>{const list=bank.filter(x=>x.area===area);return Array.from({length:5},(_,i)=>list[(i+paper*5)%list.length])};
-export function ExamChallenge({progress,setProgress,onHome,onWeak}:{progress:Progress;setProgress:Setter;onHome:()=>void;onWeak:(a:Area)=>void}){
+function ExamChallengeContent({progress,setProgress,onHome,onWeak}:{progress:Progress;setProgress:Setter;onHome:()=>void;onWeak:(a:Area)=>void}){
  const[paper,setPaper]=useState(0),[attempt,setAttempt]=useState<MockAttempt>(),[review,setReview]=useState(false),[filter,setFilter]=useState<'all'|'incorrect'>('all');const area=areas[attempt?.section||0],items=attempt?paperItems(paper,area):[],allAnswered=items.every(x=>attempt?.answers[x.id]!==undefined),revealed=attempt?.revealed.includes(attempt.section),submitted=Boolean(attempt?.submittedAt);
  const update=(next:MockAttempt)=>{setAttempt(next);setProgress(p=>({...p,mockAttempts:[...(p.mockAttempts||[]).filter(x=>x.id!==next.id),next]}))};
  const begin=()=>{const existing=progress.mockAttempts?.find(x=>x.paperId===`mock-${paper+1}`&&!x.submittedAt);setAttempt(existing||newMockAttempt(`mock-${paper+1}`));setReview(false)};
@@ -66,3 +67,9 @@ export function ExamChallenge({progress,setProgress,onHome,onWeak}:{progress:Pro
  return <section className="exam-challenge"><div className="lessonintro"><span>MOCK EXAM {paper+1} · SECTION {attempt.section+1} OF 4</span><h2>{area} · {labels[area]} · 25 marks</h2><p>First submitted answers are locked. Correct answers and explanations remain hidden until final submission.</p></div>{items.map((q,i)=>{const ok=attempt.answers[q.id]===q.answer;return <article className="question exam-item" key={q.id}><small>Item {i+1} · 5 marks</small><h3>{q.prompt}</h3><div className="quick-options">{q.options.map((x,j)=><button disabled={attempt.answers[q.id]!==undefined} className={attempt.answers[q.id]===j?'selected':''} onClick={()=>update({...attempt,answers:{...attempt.answers,[q.id]:j}})} key={x}>{x}</button>)}</div>{revealed&&<p className={'mark-status '+(ok?'is-correct':'is-incorrect')}>{ok?<CheckCircle/>:<XCircle/>}<b>{ok?'Correct':'Incorrect'} · {ok?'5':'0'} / 5</b></p>}</article>})}{allAnswered&&!revealed&&<button className="primary big" onClick={()=>{const score=scoreSection(attempt.answers,items);update({...attempt,revealed:[...attempt.revealed,attempt.section],sectionScores:{...attempt.sectionScores,[area]:score}})}}>Reveal {area} Marks</button>}{revealed&&<section className="section-result"><h3>{area}: {attempt.sectionScores[area]}/25</h3><p>Answers stay locked. Correct answers and explanations remain hidden.</p><button className="primary" onClick={()=>{if(attempt.section<3)update({...attempt,section:attempt.section+1});else update({...attempt,score:Object.values(attempt.sectionScores).reduce((a,b)=>a+b,0),submittedAt:new Date().toISOString()})}}>{attempt.section<3?`Continue to Q${attempt.section+2}`:'Submit Exam & View Results'}</button></section>}</section>;
 }
 export{firstAttemptAccuracy};
+
+export function QuickRevision(props:Parameters<typeof QuickRevisionContent>[0]){return <ReadingActivity><QuickRevisionContent {...props}/></ReadingActivity>}
+
+export function AnswerBuilder(props:Parameters<typeof AnswerBuilderContent>[0]){return <ReadingActivity><AnswerBuilderContent {...props}/></ReadingActivity>}
+
+export function ExamChallenge(props:Parameters<typeof ExamChallengeContent>[0]){return <ReadingActivity><ExamChallengeContent {...props}/></ReadingActivity>}
