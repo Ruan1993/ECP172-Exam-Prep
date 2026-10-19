@@ -266,3 +266,53 @@ test('actual Q4 cards render separate numbered concept blocks in both model answ
   assert.ok(Array.from(document.querySelectorAll('.reading-prose p')).find(p=>p.textContent?.startsWith('A stereotype')&&!p.hasAttribute('data-concept')));
  }finally{await cleanup()}
 });
+
+test('active recall hides answers from DOM and speech, reveals hints and saves separate question ratings',async()=>{
+ const {default:App}=await import('../src/App');
+ localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q4-b':'later'},position:{q1:0,q2:0,q3:0,q4:0},lastQuestion:'q4'}));
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;
+ await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ try{
+  await click(textButton('Revise Again'));
+  assert.match(document.querySelector('#revision-question')!.textContent!,/Compare equality and equity/);
+  assert.equal(document.querySelector('#revision-answer'),null);assert.equal(document.querySelector('#revision-hint'),null);
+  assert.equal(textButton('Got it!'),undefined);
+  await click(button('Read current card'));
+  assert.ok(c.segments.some(t=>t.includes('Compare equality')));assert.ok(c.segments.every(t=>!t.includes('possess equal dignity')));
+  const stale=said.at(-1);await click(textButton('Show hint'));assert.equal(c.status,'Idle');assert.ok(document.querySelector('#revision-hint'));
+  await click(textButton('Reveal Answer'));assert.ok(document.querySelector('#revision-answer'));
+  assert.deepEqual(Array.from(document.querySelectorAll('#revision-answer [data-tone]')).map(p=>p.getAttribute('data-tone')),['yellow','green']);
+  await click(button('Read current card'));assert.ok(c.segments.some(t=>t.includes('possess equal dignity')));
+  await act(async()=>{const i=c.segments.findIndex(t=>t.includes('possess equal dignity'));c.selectSentence(i)});
+  assert.equal(document.querySelector('.reading-active')?.getAttribute('data-concept'),'equality');
+  await act(async()=>c.pause());assert.equal(document.querySelector('.reading-active'),null);
+  await click(textButton('Got it!'));
+  let saved=JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!);assert.equal(saved.ratings['q4-b'],'later');assert.equal(saved.revision.ratings['rev-q4-equality-equity'],'understood');
+  await click(textButton('Revise Again'));saved=JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!);assert.equal(saved.revision.ratings['rev-q4-equality-equity'],'later');
+  await click(document.querySelector('.reader-start')!);await act(async()=>c.setFollow(false,false));
+  await click(textButton('Next question'));assert.equal(c.status,'Idle');assert.equal(document.querySelector('#revision-answer'),null);assert.equal(document.querySelector('#revision-hint'),null);
+  const before=said.length;await act(async()=>stale.onend());assert.equal(said.length,before);
+  await click(button('Read current card'));assert.equal(c.follow,c.preferences.follow??true);
+  await click(textButton('Previous question'));assert.equal(document.querySelector('#revision-answer'),null);assert.match(document.querySelector('.revision-position')!.textContent!,/Queued/);
+  assert.equal(document.querySelectorAll('.reader-start').length,1);assert.equal(document.querySelectorAll('.reader-player').length,1);
+  await click(textButton('Overview'));assert.equal(c.status,'Idle');
+  await click(textButton('Revise Again'));assert.match(document.querySelector('#revision-question')!.textContent!,/Compare equality/);
+ }finally{await cleanup()}
+});
+
+test('revision finish, all-understood replay and learning bookmarks retain distinct states',async()=>{
+ const {default:App}=await import('../src/App');
+ const {revisionBank}=await import('../src/revisionBank');
+ localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q1-intro':'understood'},position:{q1:0,q2:0,q3:0,q4:0},lastQuestion:'q1',revision:{ratings:Object.fromEntries(revisionBank.filter(q=>q.section==='q1').map(q=>[q.id,'understood']))}}));
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);
+ await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ try{
+  await click(textButton('Start at Q1'));await click(textButton('Revise Again'));
+  assert.ok(document.querySelector('.revision-card'));assert.equal(JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!).ratings['q1-intro'],'later');
+  for(let i=0;i<7;i++)await click(textButton('Next question'));
+  await click(textButton('Finish section'));assert.ok(document.querySelector('.revision-complete'));
+  await click(textButton('Revise this section again'));assert.match(document.querySelector('.revision-position')!.textContent!,/Question 1 of 8/);assert.equal(document.querySelector('#revision-answer'),null);
+ }finally{await cleanup()}
+});

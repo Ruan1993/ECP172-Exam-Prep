@@ -37,10 +37,10 @@ export function ReaderPlayer({controller=speech()}:{controller?:SpeechController
  if(!visible)return null;
  const iconButton=(label:string,action:()=>void,icon:React.ReactNode,disabled=false)=><button type="button" className="reader-icon" aria-label={label} title={label} onClick={action} disabled={disabled}>{icon}</button>;
  return createPortal(<div ref={bar} className={`reader-player${cards?' has-card-navigation':''}`} role="region" aria-label="Study reader">
-  {cards&&<div className="reader-card-controls" role="group" aria-label="Learning cards">
-   <button type="button" className="reader-icon reader-card-button" aria-label="Previous card" title="Previous learning card" disabled={!cards.previous||cards.busy} onClick={()=>{c.stop();cards.previous?.()}}><ChevronLeft aria-hidden="true"/><BookOpen aria-hidden="true"/></button>
-   <span className="reader-card-position" role="status" aria-atomic="true"><small>{cards.section}</small> Card {cards.position} of {cards.total}</span>
-   <button type="button" className="reader-icon reader-card-button" aria-label={cards.nextLabel??'Next card'} title={cards.nextLabel??'Next learning card'} disabled={!cards.next||cards.busy} onClick={()=>{c.stop();cards.next?.()}}><BookOpen aria-hidden="true"/><ChevronRight aria-hidden="true"/></button>
+  {cards&&<div className="reader-card-controls" role="group" aria-label={cards.itemLabel==='Question'?'Revision questions':'Learning cards'}>
+   <button type="button" className="reader-icon reader-card-button" aria-label={cards.itemLabel==='Question'?'Previous question':'Previous card'} title={cards.itemLabel==='Question'?'Previous revision question':'Previous learning card'} disabled={!cards.previous||cards.busy} onClick={()=>{c.stop();cards.previous?.()}}><ChevronLeft aria-hidden="true"/><BookOpen aria-hidden="true"/></button>
+   <span className="reader-card-position" role="status" aria-atomic="true"><small>{cards.section}</small> {cards.itemLabel??'Card'} {cards.position} of {cards.total}</span>
+   <button type="button" className="reader-icon reader-card-button" aria-label={cards.nextLabel??(cards.itemLabel==='Question'?'Next question':'Next card')} title={cards.nextLabel??(cards.itemLabel==='Question'?'Next revision question':'Next learning card')} disabled={!cards.next||cards.busy} onClick={()=>{c.stop();cards.next?.()}}><BookOpen aria-hidden="true"/><ChevronRight aria-hidden="true"/></button>
   </div>}
   <div className="reader-main-controls">
    {iconButton('Previous sentence',()=>c.navigate(-1),<SkipBack aria-hidden="true"/>,idle||c.index===0)}
