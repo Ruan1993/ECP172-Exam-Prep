@@ -1,0 +1,5 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {sentenceAtPoint,interactiveSentenceTarget} from '../src/readingSentences.ts';
+test('sentence hit testing handles wrapped lines and ignores whitespace outside text',()=>{const rect=(left:number,top:number,right:number,bottom:number)=>({left,top,right,bottom});const sentences=[{text:'Wrapped sentence.',range:{getClientRects:()=>[rect(10,10,90,30),rect(10,30,40,50)]}},{text:'Next.',range:{getClientRects:()=>[rect(45,30,90,50)]}}] as any;assert.equal(sentenceAtPoint(sentences,20,40),0);assert.equal(sentenceAtPoint(sentences,70,40),1);assert.equal(sentenceAtPoint(sentences,100,40),-1)});
+test('interactive target exclusion includes links, controls, editable and hidden content',()=>{let selector='';assert.equal(interactiveSentenceTarget({closest:(s:string)=>{selector=s;return {}}} as any),true);for(const tag of ['button','a','summary','input','select','textarea','[contenteditable]','[hidden]'])assert.ok(selector.split(',').includes(tag));assert.equal(interactiveSentenceTarget({closest:()=>null} as any),false)});

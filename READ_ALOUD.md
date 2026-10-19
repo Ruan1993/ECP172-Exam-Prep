@@ -21,3 +21,13 @@ Browser voices can require network access. Local voices can work offline; no ext
 - No physical Android Chrome testing was available. Mocked tests and desktop API observations do not establish audible Android reliability. Exact-word resumption is intentionally not supported.
 
 API reference: https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis/cancel
+
+## Click-to-read sentences (19 October 2026)
+
+Supported visible headings, paragraphs, list items, quotations and definition entries can be clicked or tapped to read one sentence. The same DOM Range supplies the speech text and the bright yellow CSS Custom Highlight for continuous and single-sentence reading. Inline emphasis remains intact. Blocks containing controls or links, hidden content and closed disclosure content are excluded. Nested past-paper readers handle a click once.
+
+Selecting text does not start speech. Normal copying, semantic content and focus remain intact. The labelled Sentence selector and Read selected sentence button provide the keyboard equivalent. Continue from selected sentence deliberately starts continuous reading at that sentence. A single-sentence completion retains the highlight and position, does not advance, and does not invoke lesson completion. Resume repeats only that sentence; Stop clears the highlight. Existing card/route cleanup still cancels speech.
+
+Follow reading scrolls only during active narration, respects reduced motion, and suspends after wheel, touch scrolling or reading-area navigation keys. Re-enable it with Follow reading. Speed, device voice and speech volume share the existing preference store. Volume changes affect the next utterance without interrupting current speech. No study progress keys or content were changed. No dependencies were added.
+
+Verification: 50 Node tests pass, including selected-sentence cancellation, stale events, explicit continuous continuation, rapid changes, volume persistence, wrapped-line hit testing and interactive exclusions. TypeScript/Vite/PWA production build passes. Controller tests simulate speech; they do not establish audible device playback. The available browser could not reach the local development server (both localhost and 127.0.0.1 timed out), so current mobile layout, screen-reader behavior and physical Android audio remain unverified. CSS Custom Highlights require a browser supporting that API; speech controls remain available where highlighting is unsupported.
