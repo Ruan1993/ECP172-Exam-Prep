@@ -9,7 +9,7 @@ import {boundaryWord} from '../src/speech';
 
 registerHooks({load(url,context,next){if(url.endsWith('.css'))return {format:'module',source:'',shortCircuit:true};return next(url,context)}});
 const win=new Window({url:'http://localhost/'});
-for(const name of ['window','document','Node','Element','HTMLElement','HTMLDetailsElement','Text','NodeFilter','MutationObserver','MouseEvent','KeyboardEvent','Event','PointerEvent','ResizeObserver','localStorage','getComputedStyle']){
+for(const name of ['window','document','Node','Element','HTMLElement','HTMLDetailsElement','Text','NodeFilter','MutationObserver','MouseEvent','KeyboardEvent','Event','PointerEvent','ResizeObserver','localStorage','sessionStorage','getComputedStyle']){
  Object.defineProperty(globalThis,name,{value:name==='window'?win:(win as any)[name],configurable:true,writable:true});
 }
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;
@@ -41,6 +41,51 @@ async function cleanup(){await act(async()=>{c.stop();root.unmount()});host.remo
 const button=(label:string)=>document.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
 async function click(element:Element){assert.ok(element);await act(async()=>element.dispatchEvent(new win.MouseEvent('click',{bubbles:true,clientX:20,clientY:910,button:0}) as any))}
 const highlightText=()=>highlights.get('reading-sentence')?.ranges[0].toString();
+
+test('backup pickers allow provider MIME types but validate contents and require restore confirmation',async()=>{
+ const {ReadingProgressTransfer}=await import('../src/ReadingProgressTransfer');
+ const {ProgressTransfer}=await import('../src/ProgressTransfer');
+ const {createBackup,empty}=await import('../src/storage');
+ const reading={version:1,kind:'ECP172 Learn First',ratings:{'q1-intro':'later'},position:{q1:1,q2:0,q3:0,q4:0},lastQuestion:'q1',revision:{ratings:{'rev-q1-rights':'later'}}};
+ const legacy=createBackup({...empty,reviewed:['intro']});
+ const cases=[{Component:ReadingProgressTransfer,key:'ecp172-learn-first-v1',backup:reading,trigger:'Backup',select:'Restore a backup',confirm:'Yes, restore the backup'},
+  {Component:ProgressTransfer,key:'ecp172-progress-v1',backup:legacy,trigger:'Backup Progress',select:'Restore Progress from Google Drive',confirm:'Restore this backup'}];
+ for(const {Component,key,backup,trigger,select,confirm} of cases){
+  host=document.createElement('div');document.body.append(host);root=createRoot(host);
+  const original=JSON.stringify({sentinel:'existing progress'});localStorage.setItem(key,original);
+  const textButton=(label:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent?.trim()===label);
+  try{
+   await act(async()=>root.render(<Component/>));await click(textButton(trigger)!);
+   const input=host.querySelector<HTMLInputElement>('input[type="file"]')!;
+   assert.equal(input.hasAttribute('accept'),false);assert.equal(input.multiple,false);
+   let launches=0;input.click=()=>{launches++};await click(textButton(select)!);assert.equal(launches,1);
+   const choose=async(file?:File)=>{
+    Object.defineProperty(input,'files',{value:file?[file]:[],configurable:true});
+    await act(async()=>input.dispatchEvent(new win.Event('change',{bubbles:true}) as any));
+    assert.equal(input.value,'');assert.equal(localStorage.getItem(key),original);
+   };
+   await choose();assert.equal(textButton(confirm),undefined);
+   for(const type of ['application/json','text/plain','application/octet-stream','']){
+    await choose(new win.File([JSON.stringify(backup)],'backup.json',{type}) as any);
+    assert.ok(textButton(confirm));await click(textButton('Cancel')!);
+    assert.equal(textButton(confirm),undefined);assert.equal(localStorage.getItem(key),original);
+   }
+   for(const contents of ['not JSON','{}',JSON.stringify({...backup,version:999}),JSON.stringify({...backup,kind:'unrelated'}),JSON.stringify({...backup,ratings:{x:'invalid'},progress:{...empty,cards:{x:'invalid'}}})]){
+    await choose(new win.File([contents],'unrelated.txt',{type:'text/plain'}) as any);
+    assert.equal(textButton(confirm),undefined);
+    assert.ok(host.querySelector('.lf-transfer-error,.transfer-message')!.textContent);
+   }
+   const unreadable=new win.File([''],'backup.json');Object.defineProperty(unreadable,'text',{value:async()=>{throw Error('Provider could not read file')}});
+   await choose(unreadable as any);assert.match(host.textContent!,/Provider could not read file/);assert.equal(textButton(confirm),undefined);
+   if(Component===ReadingProgressTransfer){
+    const oversized=new win.File([''],'backup.json');Object.defineProperty(oversized,'size',{value:1024*1024+1});
+    await choose(oversized as any);assert.match(host.textContent!,/too large/);assert.equal(textButton(confirm),undefined);
+   }
+   await choose(new win.File([JSON.stringify(backup)],'backup.json',{type:'application/octet-stream'}) as any);
+   assert.ok(textButton(confirm));assert.equal(localStorage.getItem(key),original);
+  }finally{await cleanup();localStorage.removeItem(key)}
+ }
+});
 
 test('concept paragraph follows narration and clears on pause, transition, stop and unmount',async()=>{
  await mount();try{
