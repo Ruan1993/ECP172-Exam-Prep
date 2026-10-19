@@ -9,7 +9,7 @@ import {boundaryWord} from '../src/speech';
 
 registerHooks({load(url,context,next){if(url.endsWith('.css'))return {format:'module',source:'',shortCircuit:true};return next(url,context)}});
 const win=new Window({url:'http://localhost/'});
-for(const name of ['window','document','Node','Element','HTMLElement','HTMLDetailsElement','Text','NodeFilter','MutationObserver','MouseEvent','KeyboardEvent','Event','PointerEvent','ResizeObserver','localStorage','sessionStorage','getComputedStyle']){
+for(const name of ['window','document','Node','Element','HTMLElement','HTMLDetailsElement','Text','NodeFilter','MutationObserver','MouseEvent','KeyboardEvent','Event','PointerEvent','ResizeObserver','localStorage','sessionStorage','FileReader','getComputedStyle']){
  Object.defineProperty(globalThis,name,{value:name==='window'?win:(win as any)[name],configurable:true,writable:true});
 }
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT=true;
@@ -61,7 +61,7 @@ test('backup pickers allow provider MIME types but validate contents and require
    let launches=0;input.click=()=>{launches++};await click(textButton(select)!);assert.equal(launches,1);
    const choose=async(file?:File)=>{
     Object.defineProperty(input,'files',{value:file?[file]:[],configurable:true});
-    await act(async()=>input.dispatchEvent(new win.Event('change',{bubbles:true}) as any));
+    await act(async()=>{input.dispatchEvent(new win.Event('change',{bubbles:true}) as any);await win.happyDOM.whenAsyncComplete()});
     assert.equal(input.value,'');assert.equal(localStorage.getItem(key),original);
    };
    await choose();assert.equal(textButton(confirm),undefined);
@@ -75,8 +75,11 @@ test('backup pickers allow provider MIME types but validate contents and require
     assert.equal(textButton(confirm),undefined);
     assert.ok(host.querySelector('.lf-transfer-error,.transfer-message')!.textContent);
    }
-   const unreadable=new win.File([''],'backup.json');Object.defineProperty(unreadable,'text',{value:async()=>{throw Error('Provider could not read file')}});
-   await choose(unreadable as any);assert.match(host.textContent!,/Provider could not read file/);assert.equal(textButton(confirm),undefined);
+   const unreadable=new win.File([''],'backup.json');const OriginalReader=globalThis.FileReader;
+   // Reproduce the provider's File API error after a previous valid selection.
+   await choose(new win.File([JSON.stringify(backup)],'backup.json') as any);assert.ok(textButton(confirm));
+   Object.defineProperty(globalThis,'FileReader',{configurable:true,value:class {onerror?:()=>void;error={name:'NotFoundError'};readAsText(){queueMicrotask(()=>this.onerror?.())}}});
+   try{await choose(unreadable as any);assert.match(host.textContent!,/Could not access.*NotFoundError/);assert.match(host.textContent!,/choose the file from Google Drive again/);assert.equal(textButton(confirm),undefined)}finally{Object.defineProperty(globalThis,'FileReader',{configurable:true,value:OriginalReader})}
    if(Component===ReadingProgressTransfer){
     const oversized=new win.File([''],'backup.json');Object.defineProperty(oversized,'size',{value:1024*1024+1});
     await choose(oversized as any);assert.match(host.textContent!,/too large/);assert.equal(textButton(confirm),undefined);

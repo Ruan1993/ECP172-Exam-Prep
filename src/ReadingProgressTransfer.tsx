@@ -1,4 +1,5 @@
 import {restoreReadingBackup,isReadingBackup,type ReadingBackup} from './readingProgress';
+import {readBackupFile} from './backupFile';
 import { useRef, useState } from 'react';
 import { Download, HardDriveDownload, Upload, X } from 'lucide-react';
 const KEY='ecp172-learn-first-v1';
@@ -16,8 +17,8 @@ export function ReadingProgressTransfer(){
   const link=URL.createObjectURL(file);const a=document.createElement('a');a.href=link;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(link),1000)
  };
  const read=async(e:React.ChangeEvent<HTMLInputElement>)=>{
-  const file=e.target.files?.[0];e.target.value='';if(!file)return;
-  try{if(file.size>1024*1024)throw Error('That file is too large for a progress backup.');const data=JSON.parse(await file.text());if(!isReadingBackup(data))throw Error('This is not a valid ECP172 Learn First backup.');setPending(data);setError('')}
+  const input=e.currentTarget;setPending(null);setError('');
+  try{const text=await readBackupFile(input,1024*1024);if(text===null)return;const data=JSON.parse(text);if(!isReadingBackup(data))throw Error('This is not a valid ECP172 Learn First backup.');setPending(data);setError('')}
   catch(e){setError(e instanceof Error?e.message:'Unable to read backup.')}
  };
  const restore=()=>{if(!pending)return;const current=JSON.parse(localStorage.getItem(KEY)||'null');localStorage.setItem(KEY,JSON.stringify(restoreReadingBackup(pending,current)));window.location.reload()};
