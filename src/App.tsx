@@ -1,3 +1,5 @@
+import {ExamQuestionPanel} from './ExamQuestionPanel';
+import {readingQuestionTopics} from './pastPaperQuestions';
 import {ReadAloud,speech} from './ReadAloud';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Bookmark, Check, ChevronDown, ChevronRight, CircleHelp, Compass, Download, GraduationCap, Heart, Lightbulb, Menu, Moon, RotateCcw, Sparkles, Sun, X } from 'lucide-react';
@@ -86,6 +88,7 @@ function App(){
     <ReadAloud key={current.id} label={current.title} scope={()=>document.querySelector('.lf-page-card')}/><article className="lf-page-card"><span className="lf-card-tag">{current.tag}</span><h2>{current.title}</h2>{current.scene&&<div className="lf-story-banner"><span aria-hidden="true">📍</span><p>{current.scene}</p></div>}
     <div className="reading-prose">{current.body.map((text,i)=><Paragraph key={`${current.id}-${i}`} value={text}/>)}</div>
     {current.tip&&<div className="lf-teacher-tip"><Lightbulb size={19}/><div><span>THE THING TO REMEMBER</span><p>{current.tip}</p></div></div>}
+    {readingQuestionTopics[current.id]&&<ExamQuestionPanel key={current.id} topic={readingQuestionTopics[current.id]}/>}
     </article>
     <div className="lf-rating"><div><h3>How does this feel?</h3><p>Just a personal bookmark — not a test.</p></div><div className="rating-buttons"><button aria-pressed={rating==='understood'} className={'understand '+(rating==='understood'?'chosen':'')} onClick={()=>mark('understood')}><Check size={18}/> I understand it</button><button aria-pressed={rating==='later'} className={'bookmark '+(rating==='later'?'chosen':'')} onClick={()=>mark('later')}><Bookmark size={17}/> Revise later</button></div></div>
     <div className="lf-reader-actions"><button disabled={index===0} onClick={()=>setIndex(index-1)}><ArrowLeft size={18}/> Previous</button><div className="read-jump">{index+1} / {guide[active].length}</div>{index<guide[active].length-1?<button className="lf-primary" onClick={()=>setIndex(index+1)}>Next card <ArrowRight size={18}/></button>:active!=='q4'?<button className="lf-primary" onClick={()=>select(('q'+(Number(active.slice(1))+1)) as Question,0)}>Continue to next question <ArrowRight size={18}/></button>:<button className="lf-primary" onClick={()=>go('home')}>Back to overview <ArrowRight size={18}/></button>}</div>
