@@ -84,7 +84,7 @@ test('navigation resets only temporary manual suspension to the saved follow pre
 });
 test('a new card after completed narration restores saved follow without changing pause or manual-scroll behavior',()=>{
  for(const saved of [true,false]){
-  const {c,said}=setup();c.setFollow(saved);c.play('First card.');c.setFollow(false,false);c.pause();assert.equal(c.follow,false);c.resume();assert.equal(c.follow,false);
+  const {c,said}=setup();c.setFollow(saved);c.play('First card.');c.setFollow(false,false);c.pause();assert.equal(c.follow,false);c.resume();assert.equal(c.follow,saved);
   said.at(-1).onend();assert.equal(c.status,'Finished');c.play('Next card.');assert.equal(c.follow,saved);
  }
 });

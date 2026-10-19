@@ -42,6 +42,35 @@ const button=(label:string)=>document.querySelector<HTMLButtonElement>(`button[a
 async function click(element:Element){assert.ok(element);await act(async()=>element.dispatchEvent(new win.MouseEvent('click',{bubbles:true,clientX:20,clientY:910,button:0}) as any))}
 const highlightText=()=>highlights.get('reading-sentence')?.ranges[0].toString();
 
+test('concept paragraph follows narration and clears on pause, transition, stop and unmount',async()=>{
+ await mount();try{
+  const first=document.querySelector('article p')!;
+  first.setAttribute('data-concept','equality');
+  const next=document.createElement('p');next.setAttribute('data-concept','equity');next.textContent='Fair support.';first.after(next);
+  await click(document.querySelector('.reader-start')!);
+  assert.ok(first.classList.contains('reading-active'));
+  await act(async()=>said.at(-1).onboundary({name:'word',charIndex:0,charLength:5}));
+  assert.equal(highlightText(),'First');assert.ok(first.classList.contains('reading-active'));
+  await act(async()=>c.pause());assert.equal(document.querySelectorAll('.reading-active').length,0);
+  await act(async()=>c.resume());assert.ok(first.classList.contains('reading-active'));
+  await act(async()=>c.navigate(1));await act(async()=>c.navigate(1));
+  assert.ok(next.classList.contains('reading-active'));assert.equal(first.classList.contains('reading-active'),false);
+  await act(async()=>c.stop());assert.equal(document.querySelectorAll('.reading-active').length,0);
+ }finally{await cleanup()}
+});
+
+test('normalised speech boundaries highlight visible words after expanded acronyms',async()=>{
+ await mount();try{
+  const prose=document.querySelector('article p')!;prose.textContent='LoLT supports access.';
+  await click(document.querySelector('.reader-start')!);const u=said.at(-1);
+  assert.equal(u.text,'Language of Learning and Teaching supports access.');
+  await act(async()=>u.onboundary({name:'word',charIndex:u.text.indexOf('supports'),charLength:8}));
+  assert.equal(highlightText(),'supports');
+  await act(async()=>u.onboundary({name:'word',charIndex:999,charLength:0}));
+  assert.equal(highlightText(),'LoLT supports access.');
+ }finally{await cleanup()}
+});
+
 test('DOM ranges preserve emphasis, punctuation, wrapping text and copying',()=>{
  const article=document.createElement('article');article.innerHTML='<p>  First <strong>sentence</strong>. Second sentence!</p><details><summary>Panel</summary><p>Hidden text.</p></details><p><button>Skip control</button></p>';document.body.append(article);
  const sentences=readingSentences(article);assert.deepEqual(sentences.map(s=>s.text),['First sentence.','Second sentence!']);
@@ -212,5 +241,25 @@ test('six revised Q2 cards navigate, narrate, persist ratings and retain scenari
   const saved=JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!);
   assert.equal(saved.position.q2,5);assert.equal(saved.ratings['q2-a-proposal'],'understood');assert.equal(saved.ratings['q1-intro'],'later');
   await click(textButton('Continue to next question'));assert.match(document.querySelector('.reader-number')!.textContent!,/CARD 1 OF/);
+ }finally{await cleanup()}
+});
+
+test('actual Q4 cards render separate numbered concept blocks in both model answers',async()=>{
+ const {default:App}=await import('../src/App');
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);
+ await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ try{
+  await click(textButton('Q4'));
+  const select=async(label:string)=>{const item=Array.from(document.querySelectorAll('.outline-list button')).find(b=>b.textContent?.includes(label))!;await click(item)};
+  for(const label of ['Four approaches in plain language','Four approaches, one better classroom']){
+   await select(label);
+   const blocks=Array.from(document.querySelectorAll('.learning-concept'));
+   assert.deepEqual(blocks.map(b=>b.getAttribute('data-tone')),['yellow','green','blue','purple']);
+   assert.ok(blocks.every((b,i)=>b.tagName==='P'&&b.textContent?.startsWith(`${i+1}. `)));
+  }
+  await select('Equality, equity and discrimination');
+  assert.deepEqual(Array.from(document.querySelectorAll('.learning-concept')).map(b=>b.getAttribute('data-concept')),['equality','equity','discrimination']);
+  assert.ok(Array.from(document.querySelectorAll('.reading-prose p')).find(p=>p.textContent?.startsWith('A stereotype')&&!p.hasAttribute('data-concept')));
  }finally{await cleanup()}
 });

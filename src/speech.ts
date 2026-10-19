@@ -1,3 +1,4 @@
+import {normaliseSpeech} from './speechText';
 export type SpeechStatus = 'Idle'|'Speaking'|'Paused'|'Finished'|'Error';
 export type Preferences = {rate:number;voiceURI:string;volume?:number;lastVolume?:number;follow?:boolean};
 export type SpokenWord = {start:number;end:number};
@@ -44,12 +45,12 @@ export class SpeechController {
  stop=()=>{this.cancel();this.follow=this.preferences.follow??true;this.status='Idle';this.message='';this.done=undefined;this.emit()};
  play=(text:string,done?:()=>void)=>this.playSentences(segmentText(text),0,false,done);
  playSentences=(segments:string[],index=0,single=false,done?:()=>void)=>{
-  if(this.status==='Finished')this.follow=this.preferences.follow??true;
+  this.follow=this.preferences.follow??true;
   this.cancel();this.segments=segments;this.index=index;this.single=single;this.done=done;this.message='';
   if(!this.engine){this.fail('Read Aloud is unavailable in this browser.');return}
   if(!segments[index]){this.stop();return}this.say();
  };
- continueReading=()=>{this.single=false;this.cancel();this.message='';if(this.index>=this.segments.length)this.index=0;if(this.segments[this.index])this.say()};
+ continueReading=()=>{this.follow=this.preferences.follow??true;this.single=false;this.cancel();this.message='';if(this.index>=this.segments.length)this.index=0;if(this.segments[this.index])this.say()};
  selectSentence=(index:number)=>this.playSentences(this.segments,index,true,this.done);
  navigate=(direction:number)=>{
   if(!this.segments.length)return;
@@ -62,14 +63,14 @@ export class SpeechController {
   try {
    // Fresh utterances avoid the native pause/resume deadlock on mobile devices.
    this.engine.resume();
-   const text=this.segments[this.index],u=this.create(text);this.utterance=u;u.rate=this.preferences.rate;u.volume=this.preferences.volume??1;
+   const spoken=normaliseSpeech(this.segments[this.index]),text=spoken.text,u=this.create(text);this.utterance=u;u.rate=this.preferences.rate;u.volume=this.preferences.volume??1;
    const voices=this.engine.getVoices();const voice=voices.find(v=>v.voiceURI===this.preferences.voiceURI)||voices.find(v=>v.lang==='en-ZA')||voices.find(v=>v.lang.startsWith('en'));
    if(voice)u.voice=voice;u.lang=voice?.lang||'en-ZA';
    let lastIndex=-1,reliable=true;
    u.onboundary=e=>{
     if(token!==this.token||this.status!=='Speaking'||e.name!=='word'||!reliable)return;
     const word=boundaryWord(text,e.charIndex,e.charLength??0,e.name);
-    if(!word||e.charIndex<lastIndex){reliable=false;this.word=null}else{lastIndex=e.charIndex;this.word=word}
+    if(!word||e.charIndex<lastIndex){reliable=false;this.word=null}else{lastIndex=e.charIndex;this.word=spoken.mapWord(word)}
     this.emit();
    };
    u.onend=()=>{
@@ -84,7 +85,7 @@ export class SpeechController {
   }catch{this.fail('Speech could not start. Choose another device voice and try Play.')}
  }
  pause=()=>{if(this.status!=='Speaking')return;this.cancel();this.status='Paused';this.message='Play repeats the current sentence and continues reading.';this.emit()};
- resume=()=>{if(this.status!=='Paused'&&this.status!=='Error')return;if(this.index<this.segments.length){this.message='';this.say()}};
+ resume=()=>{if(this.status!=='Paused'&&this.status!=='Error')return;if(this.index<this.segments.length){this.follow=this.preferences.follow??true;this.message='';this.say()}};
  restart=()=>{if(this.segments.length)this.playSentences(this.segments,0,false,this.done)};
  setFollow=(follow:boolean,persist=true)=>{this.follow=follow;if(persist)this.configure({follow});else this.emit()};
  toggleMute=()=>this.configure({volume:(this.preferences.volume??1)>0?0:this.preferences.lastVolume??1});

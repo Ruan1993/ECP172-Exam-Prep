@@ -17,6 +17,8 @@ export function scrollToSentence(sentence:ReadingSentence){
 
 export function useSentenceReading(c:SpeechController,scope:(()=>Element|null)|undefined,onFinished?:()=>void){
  const latest=useRef({scope,onFinished});latest.current={scope,onFinished};
+ const activeParagraph=useRef<Element|null>(null);
+ const clearParagraph=()=>{activeParagraph.current?.classList.remove('reading-active');activeParagraph.current=null};
  const sentences=useRef<ReadingSentence[]>([]),session=useRef<string[]|null>(null),owner=useRef({});
  const binding=useRef<{root:Element;dispose:()=>void}|null>(null);
  const refresh=()=>{const root=latest.current.scope?.();sentences.current=root?readingSentences(root):[]};
@@ -24,7 +26,7 @@ export function useSentenceReading(c:SpeechController,scope:(()=>Element|null)|u
   refresh();session.current=sentences.current.map(s=>s.text);
   if(text!==undefined){sentences.current=[];session.current=null;c.play(text,latest.current.onFinished);session.current=c.segments;return}
   c.playSentences(session.current,index,single,()=>latest.current.onFinished?.());
-  const sentence=sentences.current[index];if(sentence&&!c.follow)scrollToSentence(sentence);
+  const sentence=sentences.current[index];if(sentence&&!c.follow&&c.status==='Speaking')scrollToSentence(sentence);
  };
  // Rebind only when the actual content root changes (e.g. a legacy learning card).
  useEffect(()=>{
@@ -42,10 +44,12 @@ export function useSentenceReading(c:SpeechController,scope:(()=>Element|null)|u
  useEffect(()=>{
   let previousIndex=-1,previousSession:string[]|null=null,previousFollow=c.follow;
   const paint=()=>{
-   if(c.segments!==session.current||['Idle','Finished','Error'].includes(c.status)){clearHighlight(owner.current);return}
-   if(!sentences.current.length){clearHighlight(owner.current);return}
+   if(c.segments!==session.current||['Idle','Finished','Error'].includes(c.status)){clearHighlight(owner.current);clearParagraph();return}
+   if(!sentences.current.length){clearHighlight(owner.current);clearParagraph();return}
    const sentence=sentences.current[c.index];
    if(!sentence||!sentence.range.startContainer.isConnected||!sentence.range.getClientRects().length){clearHighlight(owner.current);c.stop();return}
+   const paragraph=c.status==='Speaking'?sentence.range.startContainer.parentElement?.closest('[data-concept]')??null:null;
+   if(paragraph!==activeParagraph.current){clearParagraph();activeParagraph.current=paragraph;paragraph?.classList.add('reading-active')}
    const api=highlightAPI(),range=c.word?sentenceWordRange(sentence,c.word.start,c.word.end):sentence.range;
    if(api.Highlight&&api.CSS?.highlights){api.CSS.highlights.set('reading-sentence',new api.Highlight(range));highlightOwner=owner.current}
    const changed=previousIndex!==c.index||previousSession!==c.segments||(!previousFollow&&c.follow);
@@ -64,7 +68,7 @@ export function useSentenceReading(c:SpeechController,scope:(()=>Element|null)|u
    }
   });
   observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open','hidden']});
-  return()=>{unsubscribe();observer.disconnect();window.removeEventListener('wheel',suspend);window.removeEventListener('touchmove',suspend);window.removeEventListener('keydown',key);binding.current?.dispose();binding.current=null;clearHighlight(owner.current);if(c.segments===session.current)c.stop()};
+  return()=>{unsubscribe();observer.disconnect();window.removeEventListener('wheel',suspend);window.removeEventListener('touchmove',suspend);window.removeEventListener('keydown',key);binding.current?.dispose();binding.current=null;clearHighlight(owner.current);clearParagraph();if(c.segments===session.current)c.stop()};
  },[c]);
  return {start:(text?:string)=>begin(0,false,text),stopIfOwned:()=>{if(c.segments===session.current)c.stop()}};
 }
