@@ -56,3 +56,35 @@ test('manual follow suspension is transient while explicit follow preferences pe
 test('sentence selection retains deliberate continuous completion without advancing on a single sentence',()=>{
  const {c,said}=setup();let completed=0;c.playSentences(['One.','Two.'],0,false,()=>completed++);c.selectSentence(1);said.at(-1).onend();assert.equal(completed,0);assert.equal(c.status,'Paused');c.continueReading();said.at(-1).onend();assert.equal(completed,1);
 });
+test('Follow Along defaults ON for new users and existing preferences without a saved boolean',()=>{
+ const {c,said,data,storage}=setup();assert.equal(c.follow,true);assert.equal(c.status,'Idle');assert.equal(said.length,0);
+ for(const follow of [undefined,null,'false',0]){
+  data.set(preferenceKey,JSON.stringify({rate:1.25,voiceURI:'za',volume:.4,follow}));
+  const reopened=new SpeechController(undefined,()=>({}) as any,storage);
+  assert.equal(reopened.follow,true);assert.equal(reopened.preferences.rate,1.25);assert.equal(reopened.preferences.volume,.4);assert.equal(reopened.preferences.voiceURI,'za');assert.equal(reopened.status,'Idle');
+ }
+});
+test('explicit ON and OFF survive refresh or PWA reopen without starting narration',()=>{
+ const {c,data,storage,said}=setup();
+ for(const follow of [false,true,false]){
+  c.setFollow(follow);assert.equal(JSON.parse(data.get(preferenceKey)!).follow,follow);
+  let starts=0;const reopened=new SpeechController({cancel(){},resume(){},getVoices:()=>[],speak(){starts++}} as any,()=>({}) as any,storage);
+  assert.equal(reopened.follow,follow);assert.equal(reopened.status,'Idle');assert.deepEqual(reopened.segments,[]);assert.equal(starts,0);
+ }
+ assert.equal(said.length,0);assert.equal(data.get('ecp172-progress'),'existing scores');assert.equal(data.get('ecp172-learn-first-v1'),'existing ratings');
+});
+test('navigation resets only temporary manual suspension to the saved follow preference',()=>{
+ const {c,data,said}=setup();c.configure({rate:1.25,voiceURI:'za',volume:.4});
+ for(const saved of [true,false]){
+  c.setFollow(saved);c.play('A sentence.');c.setFollow(false,false);const settings=data.get(preferenceKey),count=said.length;
+  c.stop();assert.equal(c.follow,saved);assert.equal(c.status,'Idle');assert.equal(said.length,count);assert.equal(data.get(preferenceKey),settings);
+  assert.equal(c.preferences.rate,1.25);assert.equal(c.preferences.voiceURI,'za');assert.equal(c.preferences.volume,.4);
+ }
+ const fresh=setup();fresh.c.play('A sentence.');fresh.c.setFollow(false,false);fresh.c.stop();assert.equal(fresh.c.follow,true);
+});
+test('a new card after completed narration restores saved follow without changing pause or manual-scroll behavior',()=>{
+ for(const saved of [true,false]){
+  const {c,said}=setup();c.setFollow(saved);c.play('First card.');c.setFollow(false,false);c.pause();assert.equal(c.follow,false);c.resume();assert.equal(c.follow,false);
+  said.at(-1).onend();assert.equal(c.status,'Finished');c.play('Next card.');assert.equal(c.follow,saved);
+ }
+});

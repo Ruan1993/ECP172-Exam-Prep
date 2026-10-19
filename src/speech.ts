@@ -40,9 +40,11 @@ export class SpeechController {
  private emit(){this.listeners.forEach(fn=>fn())}
  get supported(){return !!this.engine}
  private cancel(){this.token++;this.utterance=null;this.word=null;this.engine?.cancel()}
- stop=()=>{this.cancel();this.status='Idle';this.message='';this.done=undefined;this.emit()};
+ // Manual scrolling suspends only this session; navigation restores the saved choice.
+ stop=()=>{this.cancel();this.follow=this.preferences.follow??true;this.status='Idle';this.message='';this.done=undefined;this.emit()};
  play=(text:string,done?:()=>void)=>this.playSentences(segmentText(text),0,false,done);
  playSentences=(segments:string[],index=0,single=false,done?:()=>void)=>{
+  if(this.status==='Finished')this.follow=this.preferences.follow??true;
   this.cancel();this.segments=segments;this.index=index;this.single=single;this.done=done;this.message='';
   if(!this.engine){this.fail('Read Aloud is unavailable in this browser.');return}
   if(!segments[index]){this.stop();return}this.say();

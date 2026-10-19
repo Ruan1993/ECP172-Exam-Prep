@@ -131,3 +131,23 @@ test('completed narration survives legacy card replacement and the next card can
   await click(document.querySelector('.reader-start')!);assert.equal(said.at(-1).text,'Next card.');assert.equal(highlightText(),'Next card.');
  }finally{await cleanup()}
 });
+test('actual card and Q1–Q4/section navigation restore saved follow without autoplay',async()=>{
+ // The service-worker hook is build-generated. Its inert test replacement keeps this
+ // focused on actual App navigation; the production build verifies PWA generation.
+ registerHooks({resolve(specifier,context,next){if(specifier==='virtual:pwa-register/react')return {url:'data:text/javascript,export function useRegisterSW(){return {needRefresh:[false,()=>{}],offlineReady:[false,()=>{}],updateServiceWorker:async()=>{}}}',shortCircuit:true};return next(specifier,context)}});
+ const {default:App}=await import('../src/App');
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ for(const saved of [true,false]){
+  await act(async()=>c.setFollow(saved));said.length=0;host=document.createElement('div');document.body.append(host);root=createRoot(host);
+  await act(async()=>root.render(<React.StrictMode><App/><ReaderPlayer controller={c}/></React.StrictMode>));
+  try{
+   await click(textButton('Start at Q1'));assert.equal(c.follow,saved);assert.equal(said.length,0);
+   await click(document.querySelector('.reader-start')!);await act(async()=>win.dispatchEvent(new win.Event('wheel')) as any);assert.equal(c.follow,false);
+   const count=said.length;await click(textButton('Next card'));assert.equal(c.follow,saved);assert.equal(c.status,'Idle');assert.equal(said.length,count);
+   for(const question of ['Q2','Q3','Q4','Overview','Revise later','Q1']){
+    await click(textButton(question));assert.equal(c.follow,saved);assert.equal(c.status,'Idle');assert.equal(said.length,count);
+   }
+   assert.equal(JSON.parse(localStorage.getItem('ecp172-read-aloud-v1')!).follow,saved);
+  }finally{await cleanup()}
+ }
+});
