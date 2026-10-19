@@ -37,7 +37,7 @@ const c=speech();
 let root:Root,host:HTMLDivElement;
 function Fixture(){const scope=useRef<HTMLElement>(null);return <><ReadAloud label="Test lesson" scope={()=>scope.current}/><article ref={scope}><p data-top="900">First <strong>sentence</strong>. Second sentence!</p><p><a href="#example">A real link.</a></p><details><summary>Open explanation</summary><p>Hidden explanation.</p></details></article><ReaderPlayer controller={c}/></>}
 async function mount(){said.length=0;cancels=0;scrolls.length=0;highlights.clear();reduced=false;host=document.createElement('div');document.body.append(host);root=createRoot(host);await act(async()=>root.render(<React.StrictMode><Fixture/></React.StrictMode>))}
-async function cleanup(){await act(async()=>{c.stop();root.unmount()});host.remove();document.body.innerHTML=''}
+async function cleanup(){await act(async()=>{c.stop();root.unmount()});host.remove();document.body.innerHTML='';win.history.replaceState(null,'','/')}
 const button=(label:string)=>document.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
 async function click(element:Element){assert.ok(element);await act(async()=>element.dispatchEvent(new win.MouseEvent('click',{bubbles:true,clientX:20,clientY:910,button:0}) as any))}
 const highlightText=()=>highlights.get('reading-sentence')?.ranges[0].toString();
@@ -127,7 +127,7 @@ test('keyboard settings keep sentence navigation off the primary interface, and 
   await click(document.querySelector('article p')!);assert.equal(document.querySelector('select'),null);
   await click(button('Reading settings'));assert.ok(document.querySelector('select[aria-label="Read a sentence once"]'));
   const active=said.at(-1);await act(async()=>root.unmount());assert.equal(c.status,'Idle');active.onend();assert.equal(c.status,'Idle');assert.equal(highlights.size,0);
- }finally{host.remove();document.body.innerHTML=''}
+ }finally{host.remove();document.body.innerHTML='';win.history.replaceState(null,'','/')}
 });
 test('follow geometry respects header/player clearance and avoids scrolling visible sentences',()=>{
  assert.equal(followScrollDelta({top:150,bottom:180,height:30},80,680),0);
@@ -310,9 +310,54 @@ test('revision finish, all-understood replay and learning bookmarks retain disti
  const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
  try{
   await click(textButton('Start at Q1'));await click(textButton('Revise Again'));
-  assert.ok(document.querySelector('.revision-card'));assert.equal(JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!).ratings['q1-intro'],'later');
+  assert.ok(document.querySelector('.revision-card'));assert.match(document.querySelector('.learning-feedback')!.textContent!,/Saved for revision/);assert.equal(JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!).ratings['q1-intro'],'later');
   for(let i=0;i<7;i++)await click(textButton('Next question'));
   await click(textButton('Finish section'));assert.ok(document.querySelector('.revision-complete'));
   await click(textButton('Revise this section again'));assert.match(document.querySelector('.revision-position')!.textContent!,/Question 1 of 8/);assert.equal(document.querySelector('#revision-answer'),null);
+ }finally{await cleanup()}
+});
+
+test('learning navigation scrolls once to the stable reading heading and restores URL navigation',async()=>{
+ reduced=false;
+ const {default:App}=await import('../src/App');
+ localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{},position:{q1:0,q2:0,q3:0,q4:0},lastQuestion:'q1'}));
+ const originalScrollTo=win.scrollTo;
+ const pageTops:any[]=[];
+ win.scrollTo=((options:any)=>pageTops.push(options)) as any;
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);
+ await act(async()=>root.render(<React.StrictMode><App/><ReaderPlayer controller={c}/></React.StrictMode>));
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ try{
+  scrolls.length=0;pageTops.length=0;
+  await click(textButton('Start at Q1'));
+  assert.equal(scrolls.length,1);assert.equal(scrolls[0].behavior,'smooth');assert.equal(pageTops.length,0);
+  assert.equal(document.activeElement,document.querySelector('.lf-page-card>h2'));assert.equal(win.location.hash,'#q1/q1-intro');
+  await click(document.querySelectorAll('.outline-list button')[2]);assert.equal(win.location.hash,'#q1/q1-school');assert.equal(scrolls.length,2);assert.equal(pageTops.length,0);
+  await click(textButton('Next card'));assert.match(document.querySelector('.lf-page-card>h2')!.textContent!,/Admission/);assert.equal(scrolls.length,3);
+  reduced=true;await click(textButton('Previous'));assert.equal(scrolls.at(-1).behavior,'instant');assert.equal(pageTops.length,0);
+  const article=document.querySelector('.lf-page-card');await click(textButton('I understand it'));assert.equal(document.querySelector('.lf-page-card'),article);assert.match(document.querySelector('.learning-feedback')!.textContent!,/Marked understood/);assert.equal(scrolls.length,4);
+  win.history.replaceState(null,'','#q1/q1-rights');await act(async()=>win.dispatchEvent(new win.PopStateEvent('popstate')) as any);
+  assert.match(document.querySelector('.lf-page-card>h2')!.textContent!,/Constitution/);assert.equal(document.activeElement,document.querySelector('.lf-page-card>h2'));assert.equal(scrolls.length,5);
+ }finally{await cleanup();win.scrollTo=originalScrollTo;reduced=false}
+});
+
+test('Reveal Hide Reveal removes spoken answers and focus targets while preserving ratings',async()=>{
+ const {default:App}=await import('../src/App');
+ localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q4-b':'later'},position:{q1:0,q2:0,q3:0,q4:0},lastQuestion:'q4'}));
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);said.length=0;
+ await act(async()=>root.render(<><App/><ReaderPlayer controller={c}/></>));
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ try{
+  await click(textButton('Revise Again'));const toggle=textButton('Reveal Answer');
+  assert.equal(toggle.getAttribute('aria-expanded'),'false');const controlled=document.getElementById(toggle.getAttribute('aria-controls')!)!;assert.ok(controlled.hidden);
+  await click(toggle);const answer=document.querySelector('#revision-answer')!;assert.equal(toggle.getAttribute('aria-expanded'),'true');assert.ok(!controlled.hidden);
+  await click(textButton('Got it!'));const saved=localStorage.getItem('ecp172-learn-first-v1');
+  await click(document.querySelector('.reader-start')!);const index=c.segments.findIndex(t=>t.includes('possess equal dignity'));await act(async()=>c.selectSentence(index));
+  const old=said.at(-1);assert.equal(c.status,'Speaking');
+  await click(textButton('Hide Answer'));assert.equal(c.status,'Idle');assert.deepEqual(c.segments,[]);assert.ok(controlled.hidden);assert.equal(document.querySelector('#revision-answer'),null);assert.equal(answer.isConnected,false);
+  assert.equal(document.querySelector('.reading-active'),null);assert.notEqual(document.activeElement?.textContent,'Model answer');assert.equal(localStorage.getItem('ecp172-learn-first-v1'),saved);
+  const count=said.length;await act(async()=>{old.onend();c.restart();c.resume()});assert.equal(said.length,count);
+  await click(document.querySelector('.reader-start')!);assert.ok(c.segments.every(t=>!t.includes('possess equal dignity')));await act(async()=>c.stop());
+  await click(textButton('Reveal Answer'));assert.ok(document.querySelector('#revision-answer'));assert.notEqual(document.querySelector('#revision-answer'),answer);assert.equal(localStorage.getItem('ecp172-learn-first-v1'),saved);
  }finally{await cleanup()}
 });

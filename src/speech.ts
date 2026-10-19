@@ -43,6 +43,8 @@ export class SpeechController {
  private cancel(){this.token++;this.utterance=null;this.word=null;this.engine?.cancel()}
  // Manual scrolling suspends only this session; navigation restores the saved choice.
  stop=()=>{this.cancel();this.follow=this.preferences.follow??true;this.status='Idle';this.message='';this.done=undefined;this.emit()};
+ // Removed content must not remain restartable through a stale speech session.
+ clearSession=()=>{this.segments=[];this.index=0;this.stop()};
  play=(text:string,done?:()=>void)=>this.playSentences(segmentText(text),0,false,done);
  playSentences=(segments:string[],index=0,single=false,done?:()=>void)=>{
   this.follow=this.preferences.follow??true;

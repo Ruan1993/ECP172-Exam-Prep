@@ -1,3 +1,4 @@
+import {focusReadingHeading} from './contentNavigation';
 import {useEffect,useRef,useState,type Dispatch,type SetStateAction} from 'react';
 import {ArrowLeft,ArrowRight,Check,Lightbulb,RotateCcw,BookOpen} from 'lucide-react';
 import {ReadAloud,speech} from './ReadAloud';
@@ -19,8 +20,8 @@ export function Revision({state,setState,onLearning}:Props){
  const root=useRef<HTMLElement>(null),heading=useRef<HTMLHeadingElement>(null),play=useRef<{play:()=>void}>(null),focusNext=useRef(false);
  const reset=()=>{speech().stop();setRevealed(false);setHint(false);setFeedback(null);setComplete(false);focusNext.current=true};
  const choose=(section:Question)=>{reset();setSession({section,questions:orderedRevision(section,state),index:0})};
- const move=(index:number)=>{reset();setSession(s=>({...s,index}));window.scrollTo({top:0,behavior:'instant'})};
- useEffect(()=>{if(focusNext.current){heading.current?.focus({preventScroll:true});focusNext.current=false}},[session]);
+ const move=(index:number)=>{reset();setSession(s=>({...s,index}))};
+ useEffect(()=>{if(focusNext.current){if(heading.current)focusReadingHeading(heading.current);focusNext.current=false}},[session]);
  useEffect(()=>{if(revealed)answerHeading.current?.focus({preventScroll:true})},[revealed]);
  useEffect(()=>()=>speech().stop(),[]);
  useReaderCardNavigation({itemLabel:'Question',section:`${session.section.toUpperCase()} revision`,position:session.index+1,total:session.questions.length,play:()=>play.current?.play(),previous:session.index>0?()=>move(session.index-1):undefined,next:session.index<session.questions.length-1?()=>move(session.index+1):()=>{speech().stop();setComplete(true)},nextLabel:session.index===session.questions.length-1?'Finish revision section':undefined});
@@ -38,12 +39,12 @@ export function Revision({state,setState,onLearning}:Props){
    <h2 id="revision-question" ref={heading} tabIndex={-1}>{question.prompt}</h2>
    <p className="revision-think">Pause here. What would you include in an exam answer?</p>
    {bookmarked.length>0&&!rating&&<div className="revision-source-note">Prioritised from your learning-card bookmarks.</div>}
-   <div className="revision-tools"><button aria-expanded={hint} aria-controls="revision-hint" onClick={()=>{speech().stop();setHint(v=>!v)}}><Lightbulb size={18}/>{hint?'Hide hint':'Show hint'}</button>{!revealed&&<button className="lf-primary" aria-expanded={false} aria-controls="revision-answer" onClick={()=>{speech().stop();setRevealed(true)}}>Reveal Answer <ArrowRight size={18}/></button>}</div>
+   <div className="revision-tools"><button aria-expanded={hint} aria-controls="revision-hint" onClick={()=>{speech().stop();setHint(v=>!v)}}><Lightbulb size={18}/>{hint?'Hide hint':'Show hint'}</button><button className="lf-primary answer-toggle" aria-expanded={revealed} aria-controls="revision-answer-panel" onClick={()=>{speech().clearSession();setRevealed(v=>!v)}}>{revealed?'Hide Answer':'Reveal Answer'} <ArrowRight size={18}/></button></div>
    {hint&&<div id="revision-hint" className="revision-hint"><h3>A starting point</h3><p>{question.hint}</p></div>}
-   {revealed&&<section id="revision-answer" className="revision-answer reading-prose" aria-label="Model answer"><h3 ref={answerHeading} tabIndex={-1}>Model answer</h3><p className="revision-answer-note">Compare your reasoning with these key points. Equivalent accurate wording is welcome.</p>
+   <div id="revision-answer-panel" hidden={!revealed}>{revealed&&<section id="revision-answer" className="revision-answer reading-prose" aria-label="Model answer"><h3 ref={answerHeading} tabIndex={-1}>Model answer</h3><p className="revision-answer-note">Compare your reasoning with these key points. Equivalent accurate wording is welcome.</p>
     <ol className="revision-points">{question.points.map((point,i)=>{const concept=conceptForText(point);return <li key={i} style={{'--point-order':i} as React.CSSProperties}>{concept?<p className="learning-concept" data-concept={concept.id} data-tone={concept.tone}>{point}</p>:<p>{!hasConceptNumbers&&`${i+1}. `}{point}</p>}</li>})}</ol>
     {question.remember&&<div className="revision-remember"><h4>Remember this</h4><p>{question.remember}</p></div>}
-   </section>}
+   </section>}</div>
   </article>
   {revealed&&<section className="revision-rating" aria-label="Rate your recall"><p>How did your answer compare?</p><div><button aria-pressed={rating==='understood'} className={`revision-got ${feedback==='understood'?'confirmed':''}`} onClick={()=>rate('understood')}><Check size={21}/> Got it!</button><button aria-pressed={rating==='later'} className={`revision-again ${feedback==='later'?'confirmed':''}`} onClick={()=>rate('later')}><RotateCcw size={20}/> Revise Again</button></div><p className="revision-feedback" role="status">{feedback==='understood'?'Saved. You can still revisit this question.':feedback==='later'?'Saved for another attempt. It will come first when you reopen this section.':'Your choice only changes this revision question.'}</p></section>}
   <div className="revision-navigation"><button disabled={session.index===0} onClick={()=>move(session.index-1)}><ArrowLeft size={18}/> Previous question</button>{session.index<session.questions.length-1?<button className="lf-primary" onClick={()=>move(session.index+1)}>Next question <ArrowRight size={18}/></button>:<button className="lf-primary" onClick={()=>{speech().stop();setComplete(true)}}>Finish section <Check size={18}/></button>}</div>
