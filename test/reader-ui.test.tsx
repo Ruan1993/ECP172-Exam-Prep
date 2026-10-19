@@ -254,6 +254,9 @@ test('actual Q4 cards render separate numbered concept blocks in both model answ
   const select=async(label:string)=>{const item=Array.from(document.querySelectorAll('.outline-list button')).find(b=>b.textContent?.includes(label))!;await click(item)};
   for(const label of ['Four approaches in plain language','Four approaches, one better classroom']){
    await select(label);
+   assert.equal(document.querySelectorAll('.reader-start').length,1);
+   const theme=document.querySelector<HTMLButtonElement>('button[title="Use light theme"],button[title="Use dark theme"],button[aria-label="Use light theme"],button[aria-label="Use dark theme"]');
+   assert.ok(theme);await click(theme);assert.equal(document.querySelectorAll('.reader-start').length,1);
    const blocks=Array.from(document.querySelectorAll('.learning-concept'));
    assert.deepEqual(blocks.map(b=>b.getAttribute('data-tone')),['yellow','green','blue','purple']);
    assert.ok(blocks.every((b,i)=>b.tagName==='P'&&b.textContent?.startsWith(`${i+1}. `)));
