@@ -34,3 +34,11 @@ body.reader-active .float{bottom:calc(var(--reader-space,130px) + 14px)}
  .reader-status{margin-left:auto;min-width:65px;padding:0 4px}
 }
 @media(prefers-reduced-motion:reduce){.reader-player *{transition:none!important;animation:none!important}html:has(body.reader-active){scroll-behavior:auto}}
+/* Learning-card controls share the existing bar and reserved page-bottom space. */
+.reader-player.has-card-navigation{flex-wrap:wrap}
+.reader-card-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex:1 0 100%;width:100%;padding-bottom:5px;border-bottom:1px solid var(--lf-border,var(--line))}
+.reader-card-position{font-size:.8rem;text-align:center;min-width:145px;font-variant-numeric:tabular-nums}
+.reader-card-position small{color:var(--lf-sub,#576c7d);font-weight:600;margin-right:5px}
+.reader-player button.reader-card-button.reader-card-button{border:1px solid var(--lf-border,var(--line));background:var(--lf-sky,#eff5fb);padding:5px;gap:0}
+.reader-player .reader-card-button svg{width:16px;height:18px}
+@media(max-width:600px){.reader-card-controls{flex-basis:auto;gap:8px;padding-bottom:5px}.reader-player.has-card-navigation{gap:4px}}

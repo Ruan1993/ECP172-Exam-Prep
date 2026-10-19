@@ -1,6 +1,7 @@
 import {ExamQuestionPanel} from './ExamQuestionPanel';
 import {guidedQuestionTopics} from './pastPaperQuestions';
 import {ReadAloud,speech} from './ReadAloud';
+import {useReaderCardNavigation} from './readerCardNavigation';
 import{useEffect,useRef,useState}from'react';
 import{Compass,Lightbulb,Pause,Play,RotateCcw,SkipBack,SkipForward,Sparkles,Square,Star,Trophy,Volume2,Zap}from'lucide-react';
 import{learningSequences}from'./guidedData';
@@ -25,6 +26,7 @@ export function GuidedLearning({area,listen=false,initialIndex=0,onPosition,onCo
  const restart=()=>{if(transitioning)return;if(needsRestartConfirmation(index)){setConfirmRestart(true);return}stop();setMotion('card-settle')};
  const confirmRestartNow=()=>{setConfirmRestart(false);animateTo(0,'previous')};
  const complete=()=>{stop();setCelebrating(true);timers.current.push(window.setTimeout(()=>{setCelebrating(false);onComplete?.()},6000))};
+ useReaderCardNavigation({position:safeIndex+1,total:cards.length,section:area,previous:safeIndex>0?()=>move(safeIndex-1):undefined,next:safeIndex<cards.length-1?()=>move(safeIndex+1):complete,nextLabel:safeIndex===cards.length-1?'Complete learning sequence':undefined,busy:transitioning||celebrating,play:()=>readerHandle.current?.play()});
  return <section className={'guided-learning '+(listen?'listen-mode':'')} data-area={area} aria-label={`${area} ${listen?'listening':'learning'} sequence`}>
   <div className="guided-status"><strong>{listen?'Listen & learn':'Guided learning'}</strong><span>Card {safeIndex+1} of {cards.length}</span></div>
   <div className="guided-track" role="progressbar" aria-label="Sequence progress" aria-valuemin={1} aria-valuemax={cards.length} aria-valuenow={safeIndex+1}><span style={{width:`${(safeIndex+1)/cards.length*100}%`}}/></div>

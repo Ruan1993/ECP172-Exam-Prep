@@ -151,3 +151,40 @@ test('actual card and Q1–Q4/section navigation restore saved follow without au
   }finally{await cleanup()}
  }
 });
+test('persistent bottom card controls reuse real app navigation, stop speech and preserve ratings/preferences',async()=>{
+ const {default:App}=await import('../src/App');
+ localStorage.setItem('ecp172-learn-first-v1',JSON.stringify({ratings:{'q1-intro':'later'},position:{q1:0,q2:0,q3:0,q4:0},lastQuestion:'q1'}));
+ await act(async()=>c.configure({follow:false,rate:1.25,voiceURI:'za',volume:.4}));const preferences=JSON.stringify(c.preferences);
+ said.length=0;host=document.createElement('div');document.body.append(host);root=createRoot(host);
+ await act(async()=>root.render(<React.StrictMode><App/><ReaderPlayer controller={c}/></React.StrictMode>));
+ const textButton=(label:string)=>Array.from(document.querySelectorAll('button')).find(b=>b.textContent?.trim()===label)!;
+ const position=()=>document.querySelector('.reader-card-position')!.textContent;
+ try{
+  await click(textButton('Start at Q1'));assert.ok(position()?.includes('Card 1 of 8'));assert.equal(button('Previous card').disabled,true);assert.equal(said.length,0);assert.equal(document.querySelectorAll('.reader-player').length,1);
+  assert.equal(button('Previous sentence').disabled,true);assert.equal(button('Next sentence').disabled,true);
+  await click(button('Read current card'));const old=said.at(-1);assert.equal(c.status,'Speaking');const count=said.length;
+  await click(button('Next card'));assert.ok(position()?.includes('Card 2 of 8'));assert.equal(c.status,'Idle');assert.equal(said.length,count);assert.equal(highlights.size,0);old.onend();old.onboundary({name:'word',charIndex:0,charLength:3});assert.equal(c.status,'Idle');
+  assert.equal(JSON.stringify(c.preferences),preferences);assert.equal(c.follow,false);assert.equal(JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!).position.q1,1);assert.equal(JSON.parse(localStorage.getItem('ecp172-learn-first-v1')!).ratings['q1-intro'],'later');
+  await click(button('Previous card'));assert.ok(position()?.includes('Card 1 of 8'));
+  for(let i=0;i<8;i++)await click(button('Next card'));assert.ok(position()?.includes('Q2'));assert.ok(position()?.includes('Card 1 of'));
+  await click(button('Previous card'));assert.ok(position()?.includes('Q1'));assert.ok(position()?.includes('Card 8 of 8'));
+  let traversed=0;while(button('Next card')){await click(button('Next card'));assert.ok(++traversed<40)}
+  assert.ok(position()?.includes('Q4'));assert.ok(button('Finish guide and return to overview'));
+  await click(button('Finish guide and return to overview'));assert.equal(document.querySelector('.reader-player'),null);assert.equal(c.status,'Idle');assert.equal(said.length,count);assert.equal(JSON.stringify(c.preferences),preferences);
+ }finally{await cleanup()}
+});
+test('legacy Guided Learning bottom navigation keeps existing progress and completion behavior without autoplay',async()=>{
+ const {GuidedLearning}=await import('../src/GuidedLearning');const {empty}=await import('../src/storage');
+ let progress={...empty,reviewed:['keep-this-rating']} as any;const positions:number[]=[];let completed=0;
+ function Legacy(){const [value,setValue]=React.useState(progress);progress=value;return <><GuidedLearning area="Q1" progress={value} setProgress={setValue} onPosition={index=>{positions.push(index)}} onComplete={()=>{completed++}}/><ReaderPlayer controller={c}/></>}
+ reduced=true;said.length=0;host=document.createElement('div');document.body.append(host);root=createRoot(host);await act(async()=>root.render(<Legacy/>));
+ const next=async()=>{await click(button('Next card'));await act(async()=>{await new Promise(resolve=>setTimeout(resolve,20))})};
+ try{
+  assert.ok(document.querySelector('.reader-player'));assert.equal(button('Previous card').disabled,true);assert.equal(said.length,0);
+  await next();assert.ok(document.querySelector('.reader-card-position')!.textContent?.includes('Card 2 of'));assert.ok(positions.includes(1));assert.deepEqual(progress.reviewed,['keep-this-rating']);assert.ok(Object.keys(progress.learningTopics).length>=2);
+  await click(button('Previous card'));await act(async()=>{await new Promise(resolve=>setTimeout(resolve,20))});assert.equal(button('Previous card').disabled,true);
+  let steps=0;while(button('Next card')){await next();assert.ok(++steps<15)}
+  await click(button('Complete learning sequence'));assert.equal(said.length,0);assert.equal(button('Complete learning sequence').disabled,true);
+  const finish=Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Continue now')!;await click(finish);assert.equal(completed,1);assert.equal(c.status,'Idle');
+ }finally{await cleanup()}
+});

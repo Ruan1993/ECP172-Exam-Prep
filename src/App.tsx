@@ -1,7 +1,8 @@
 import {ExamQuestionPanel} from './ExamQuestionPanel';
 import {readingQuestionTopics} from './pastPaperQuestions';
 import {ReadAloud,speech} from './ReadAloud';
-import { useEffect, useMemo, useState } from 'react';
+import {useReaderCardNavigation} from './readerCardNavigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Bookmark, Check, ChevronDown, ChevronRight, CircleHelp, Compass, Download, GraduationCap, Heart, Lightbulb, Menu, Moon, RotateCcw, Sparkles, Sun, X } from 'lucide-react';
 import rawGuide from './guide.json';
 import { PWAControls } from './PWAControls';
@@ -44,6 +45,7 @@ function initial():State{try{const v=JSON.parse(localStorage.getItem(storageKey)
 const isHeading=(s:string)=>/^\d+\.\s/.test(s)||s.startsWith('Exam-style model answer:')||s.startsWith('What to learn, not merely memorise')||s.startsWith('Illustrative examination prompt:')||s.startsWith('Q4 model answer')||s.startsWith('Goals and everyday classroom implications');
 function Paragraph({value}:{value:string}){const idx=value.indexOf(' — ');if(idx>0&&idx<75)return <p><strong>{value.slice(0,idx)}</strong><span className="dash"> — </span>{value.slice(idx+3)}</p>;if(value.startsWith('Scenario:'))return <p className="prompt-paragraph"><strong>THE SITUATION</strong>{value.slice(9)}</p>;if(value.startsWith('Question:'))return <p className="exam-question"><strong>THE QUESTION</strong>{value.slice(9)}</p>;if(value.startsWith('Model answer:'))return <p><strong>Model answer. </strong>{value.slice(13)}</p>;if(isHeading(value))return <h3 className="inside-heading">{value.replace(/\s*\(illustrative \d+ marks\)/g,'')}</h3>;return <p>{value}</p>}
 function App(){
+ const readerHandle=useRef<{play:()=>void}>(null);
  const [page,setPage]=useState<Page>('home');const [state,setState]=useState<State>(initial);
  const [dark,setDark]=useState(localStorage.getItem('theme')==='dark');
  const [menu,setMenu]=useState(false);const [outline,setOutline]=useState(false);const [showReset,setShowReset]=useState(false);
@@ -63,6 +65,12 @@ function App(){
  const revise=allCards.filter(c=>state.ratings[c.id]==='later');
  const rating=current?state.ratings[current.id]:undefined;
  const nextUnrated=()=>{for(const q of questions){const ix=guide[q.id].findIndex(c=>!state.ratings[c.id]);if(ix>=0){select(q.id,ix);return}}select(state.lastQuestion,state.position[state.lastQuestion])};
+ useReaderCardNavigation(active&&current?{
+  position:index+1,total:guide[active].length,section:active.toUpperCase(),play:()=>readerHandle.current?.play(),
+  previous:index>0?()=>setIndex(index-1):active!=='q1'?()=>{const previous=questions[questions.findIndex(q=>q.id===active)-1].id;select(previous,guide[previous].length-1)}:undefined,
+  next:index<guide[active].length-1?()=>setIndex(index+1):active!=='q4'?()=>select(questions[questions.findIndex(q=>q.id===active)+1].id,0):()=>go('home'),
+  nextLabel:active==='q4'&&index===guide.q4.length-1?'Finish guide and return to overview':undefined,
+ }:null);
  const exportProgress=()=>{const payload={version:1,kind:'ECP172 Learn First',exportedAt:new Date().toISOString(),...state};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ecp172-learn-first-progress.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
  return <>
  <header className="lf-header"><button className="lf-brand" onClick={()=>go('home')} aria-label="Back to study home"><span className="brand-icon"><GraduationCap/></span><span>ECP172 <strong>Learn First</strong></span></button>
@@ -85,7 +93,7 @@ function App(){
   <div className="lf-reading-layout"><aside className="lf-sidebar"><div className="outline-header"><span>YOUR READING PATH</span><span>{index+1} / {guide[active].length}</span></div><div className="tiny-progress"><span style={{width:`${((index+1)/guide[active].length)*100}%`}}/></div><div className="outline-list">{guide[active].map((c,i)=><button key={c.id} className={i===index?'selected':''} onClick={()=>setIndex(i)}><span className={'outline-dot '+(state.ratings[c.id]||'')}>{state.ratings[c.id]==='understood'?<Check size={11}/>:i+1}</span><span>{c.title}</span>{state.ratings[c.id]==='later'&&<Bookmark size={14}/>}</button>)}</div><div className="outline-caption">Theory comes first. Worked answers come after.</div></aside>
    <div className="lf-reader"><button className="outline-toggle" onClick={()=>setOutline(v=>!v)} aria-expanded={outline}><Compass size={18}/> View this question's roadmap <ChevronDown size={17}/></button>{outline&&<div className="mobile-outline">{guide[active].map((c,i)=><button key={c.id} className={index===i?'active':''} onClick={()=>setIndex(i)}>{i+1}. {c.title}{state.ratings[c.id]==='understood'?' ✓':''}</button>)}</div>}
     <div className="reader-top"><span className="reader-category">{current.kind==='scenario'?'📖 COMPLETE WORKED ANSWER':current.kind==='proposal'?'🔍 REAL RESEARCH EXAMPLE':current.kind==='intro'?'✨ START HERE':'💡 THE THEORY'}</span><span className="reader-number">CARD {index+1} OF {guide[active].length}</span></div>
-    <ReadAloud key={current.id} label={current.title} scope={()=>document.querySelector('.lf-page-card')}/><article className="lf-page-card"><span className="lf-card-tag">{current.tag}</span><h2>{current.title}</h2>{current.scene&&<div className="lf-story-banner"><span aria-hidden="true">📍</span><p>{current.scene}</p></div>}
+    <ReadAloud playRef={readerHandle} key={current.id} label={current.title} scope={()=>document.querySelector('.lf-page-card')}/><article className="lf-page-card"><span className="lf-card-tag">{current.tag}</span><h2>{current.title}</h2>{current.scene&&<div className="lf-story-banner"><span aria-hidden="true">📍</span><p>{current.scene}</p></div>}
     <div className="reading-prose">{current.body.map((text,i)=><Paragraph key={`${current.id}-${i}`} value={text}/>)}</div>
     {current.tip&&<div className="lf-teacher-tip"><Lightbulb size={19}/><div><span>THE THING TO REMEMBER</span><p>{current.tip}</p></div></div>}
     {readingQuestionTopics[current.id]&&<ExamQuestionPanel key={current.id} topic={readingQuestionTopics[current.id]}/>}
