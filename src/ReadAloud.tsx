@@ -1,23 +1,24 @@
-import {createContext,useContext,useEffect,useRef,useState,useSyncExternalStore} from 'react';
+import {createContext,useContext,useEffect,useImperativeHandle,useRef,type Ref} from 'react';
+import {Play} from 'lucide-react';
 import {useSentenceReading} from './useSentenceReading';
 import {SpeechController} from './speech';
 import './speech.css';
 let controller:SpeechController|undefined;
-let activeReader:symbol|undefined;
 export function speech(){return controller??=new SpeechController(typeof window!=='undefined'&&'speechSynthesis' in window?window.speechSynthesis:undefined,text=>new SpeechSynthesisUtterance(text),typeof localStorage==='undefined'?undefined:localStorage)}
 // Read only visible educational prose, never controls, closed disclosures, or decorative UI.
 export function visibleReadingText(root:Element):string {
  const parts:string[]=[];
- const walk=(node:Node)=>{if(node instanceof HTMLElement){if(node.matches('button,select,textarea,input,nav,aside,[hidden],[aria-hidden="true"],.read-aloud,.eyebrow,.card-level,.card-visual')||getComputedStyle(node).display==='none'||getComputedStyle(node).visibility==='hidden')return;if(node instanceof HTMLDetailsElement&&!node.open){const summary=node.querySelector('summary');if(summary)walk(summary);return}}
+ const walk=(node:Node)=>{if(node instanceof HTMLElement){if(node.matches('button,select,textarea,input,nav,aside,[hidden],[aria-hidden="true"],.read-aloud,.reader-player,.eyebrow,.card-level,.card-visual')||getComputedStyle(node).display==='none'||getComputedStyle(node).visibility==='hidden')return;if(node instanceof HTMLDetailsElement&&!node.open){const summary=node.querySelector('summary');if(summary)walk(summary);return}}
  if(node.nodeType===Node.TEXT_NODE){if(node.textContent?.trim())parts.push(node.textContent.trim());return}node.childNodes.forEach(walk);if(node instanceof HTMLElement&&/^(P|DIV|H[1-6]|LI|SECTION|ARTICLE)$/.test(node.tagName))parts.push('\n')};walk(root);return parts.join(' ').replace(/ *\n */g,'\n');
 }
-export function ReadAloud({text,label='this content',scope,onFinished}:{text?:string;label?:string;scope?:()=>Element|null;onFinished?:()=>void}){
- const c=speech();useSyncExternalStore(c.subscribe,c.snapshot,c.snapshot);const [voices,setVoices]=useState<SpeechSynthesisVoice[]>([]);const owned=useRef(Symbol());
- useEffect(()=>{const load=()=>setVoices(window.speechSynthesis?.getVoices()||[]);load();window.speechSynthesis?.addEventListener('voiceschanged',load);return()=>{window.speechSynthesis?.removeEventListener('voiceschanged',load);if(activeReader===owned.current)c.stop()}},[c]);
- useEffect(()=>()=>{if(activeReader===owned.current)c.stop()},[c,text]);
- const reader=useSentenceReading(c,scope,()=>{activeReader=owned.current},()=>activeReader===owned.current,onFinished);
- const start=()=>{if(scope&&!text){reader.start();return}activeReader=owned.current;const root=scope?.();c.play(text??(root?visibleReadingText(root):''),onFinished)};
- return <section className="read-aloud" aria-label={`Read aloud ${label}`}><div className="read-buttons"><button onClick={start} disabled={!c.supported||c.status==='Speaking'}>Read aloud</button><button onClick={c.pause} disabled={c.status!=='Speaking'}>Pause</button><button onClick={c.resume} disabled={c.status!=='Paused'&&c.status!=='Error'}>Resume</button><button onClick={c.stop} disabled={c.status==='Idle'}>Stop</button><button onClick={start} disabled={!c.supported}>Restart reading</button></div><p role="status">{c.supported?c.status:'Read Aloud is unavailable in this browser.'}{c.segments.length>0&&c.status!=='Idle'&&` · Segment ${Math.min(c.index+1,c.segments.length)} of ${c.segments.length}`}{c.message&&` — ${c.message}`}</p><p>Click or tap a sentence to hear it once. Select text normally to copy it.</p>{scope&&<div className="read-settings"><label>Sentence<select value={reader.selected} onFocus={reader.refresh} onChange={e=>reader.setSelected(Number(e.target.value))}>{reader.choices.map((sentence,i)=><option key={i} value={i}>{i+1}. {sentence}</option>)}</select></label><button disabled={!c.supported||!reader.choices.length} onClick={()=>reader.begin(reader.selected,true)}>Read selected sentence</button><button disabled={!c.supported||!reader.choices.length} onClick={()=>reader.begin(reader.selected,false)}>Continue from selected sentence</button><button aria-pressed={reader.follow} onClick={()=>reader.setFollow(!reader.follow)}>Follow reading: {reader.follow?'on':'off'}</button></div>}<details><summary>Listening settings</summary><div className="read-settings"><label>Speed<select value={c.preferences.rate} onChange={e=>c.configure({rate:Number(e.target.value)})}>{[.75,1,1.25,1.5].map(v=><option key={v} value={v}>{v}×</option>)}</select></label><label>Speech volume<input aria-label="Speech volume" type="range" min="0" max="1" step="0.05" value={c.preferences.volume??1} onChange={e=>c.configure({volume:Number(e.target.value)})}/></label><label>Device voice<select value={c.preferences.voiceURI} onChange={e=>c.configure({voiceURI:e.target.value})}><option value="">Automatic English voice</option>{voices.map(v=><option key={v.voiceURI} value={v.voiceURI}>{v.name} · {v.lang}{v.localService?' · offline':''}</option>)}</select></label></div><p>Pause keeps your sentence. Resume may repeat that sentence. Changing settings pauses playback until you resume. Device voices may need internet; screen locking or backgrounding can interrupt speech.</p></details></section>
+export function ReadAloud({text,label='this content',scope,onFinished,playRef}:{text?:string;label?:string;scope?:()=>Element|null;onFinished?:()=>void;playRef?:Ref<{play:()=>void}>}){
+ const c=speech(),reader=useSentenceReading(c,scope,onFinished);
+ useEffect(()=>()=>reader.stopIfOwned(),[c,text]);
+ useImperativeHandle(playRef,()=>({play:()=>reader.start(text)}),[reader.start,text]);
+ return <section className="read-aloud" aria-label={`Read aloud ${label}`}>
+  <button className="reader-start" disabled={!c.supported} onClick={()=>reader.start(text)} title={`Read aloud ${label}`}><Play size={17} aria-hidden="true"/> Read aloud</button>
+  <span>{c.supported?'Tap a sentence to hear it once. Playback controls stay at the bottom.':'Read Aloud is unavailable in this browser.'}</span>
+ </section>;
 }
 
 const ReadingContext=createContext(false);
@@ -25,5 +26,5 @@ export function ReadingActivity({children}:{children:React.ReactNode}){
  const nested=useContext(ReadingContext),ref=useRef<HTMLDivElement>(null);
  useEffect(()=>()=>{if(!nested)speech().stop()},[nested]);
  if(nested)return <>{children}</>;
- return <ReadingContext.Provider value={true}><div ref={ref} onClickCapture={e=>{const target=e.target as HTMLElement;if(target.closest('.read-aloud'))return;const button=target.closest('button');if(button&&/previous|next|continue|restart|Q[1-4]|start.*exam|submit|finish/i.test(button.textContent||''))speech().stop()}}><ReadAloud label="current activity" scope={()=>ref.current}/>{children}</div></ReadingContext.Provider>
+ return <ReadingContext.Provider value={true}><div ref={ref} onClickCapture={e=>{const target=e.target as HTMLElement;if(target.closest('.read-aloud,.reader-player'))return;const button=target.closest('button');if(button&&/previous|next|continue|restart|Q[1-4]|start.*exam|submit|finish/i.test(button.textContent||''))speech().stop()}}><ReadAloud label="current activity" scope={()=>ref.current}/>{children}</div></ReadingContext.Provider>
 }

@@ -3,4 +3,5 @@ import { createRoot } from 'react-dom/client';
 import './styles.css';
 import './redesign.css';
 import App from './App';
-createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);
+import {ReaderPlayer} from './ReaderPlayer';
+createRoot(document.getElementById('root')!).render(<React.StrictMode><App /><ReaderPlayer/></React.StrictMode>);

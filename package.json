@@ -1,1 +1,28 @@
-{"name":"ecp172-exam-prep","private":true,"version":"1.0.0","type":"module","scripts":{"dev":"vite --config vite.config.ts","build":"tsc -b && vite build --config vite.config.ts","test":"node --experimental-strip-types --test test/*.test.ts","preview":"vite preview --config vite.config.ts"},"dependencies":{"@vitejs/plugin-react":"latest","lucide-react":"latest","react":"latest","react-dom":"latest","typescript":"latest","vite":"latest"},"devDependencies":{"@types/react":"latest","@types/react-dom":"latest","vite-plugin-pwa":"^2.0.0","workbox-window":"^7.4.1"}}
+{
+  "name": "ecp172-exam-prep",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --config vite.config.ts",
+    "build": "tsc -b && vite build --config vite.config.ts",
+    "test": "tsx --tsconfig tsconfig.app.json --test test/*.test.ts test/*.test.tsx",
+    "preview": "vite preview --config vite.config.ts"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "lucide-react": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "happy-dom": "^21.0.3",
+    "tsx": "^4.23.15",
+    "vite-plugin-pwa": "^2.0.0",
+    "workbox-window": "^7.4.1"
+  }
+}

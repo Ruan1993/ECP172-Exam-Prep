@@ -21,3 +21,38 @@ test('continuous reading explicitly resumes at the selected sentence',()=>{const
 test('rapid sentence changes, stop and error recovery reject stale utterances',()=>{const {c,said}=setup();for(let i=0;i<12;i++){c.playSentences(['One.','Two.'],i%2,true);const u=said.at(-1);c.pause();u.onend();u.onerror({error:'canceled'});assert.equal(c.status,'Paused')}c.resume();said.at(-1).onerror({error:'network'});assert.equal(c.status,'Error');c.resume();const last=said.at(-1);c.stop();last.onend();assert.equal(c.status,'Idle')});
 test('sentence playback uses the saved voice, rate and volume without changing progress',()=>{const {c,said,data,storage}=setup();c.configure({rate:1.5,voiceURI:'za',volume:.35});c.playSentences(['Selected.'],0,true);assert.equal(said[0].rate,1.5);assert.equal(said[0].voice.voiceURI,'za');assert.equal(said[0].volume,.35);assert.equal(new SpeechController(undefined,()=>({}) as any,storage).preferences.volume,.35);assert.equal(data.get('ecp172-progress'),'existing scores')});
 test('volume changes apply to the next utterance without interrupting active speech',()=>{const {c,said}=setup();c.playSentences(['One.','Two.']);const first=said[0];c.configure({volume:.2});assert.equal(c.status,'Speaking');assert.equal(c.utterance,first);assert.equal(first.volume,1);first.onend();assert.equal(said[1].volume,.2)});
+
+test('word boundaries use actual UTF-16 offsets and clear on sentence transitions',()=>{
+ const {c,said}=setup();c.playSentences(['Hello, world!','Next sentence.']);
+ assert.equal(c.word,null);said[0].onboundary({name:'word',charIndex:0,charLength:5});assert.deepEqual(c.word,{start:0,end:5});
+ said[0].onboundary({name:'word',charIndex:7,charLength:0});assert.deepEqual(c.word,{start:7,end:12});
+ said[0].onend();assert.equal(c.index,1);assert.equal(c.word,null);
+ said[0].onboundary({name:'word',charIndex:0,charLength:5});assert.equal(c.word,null);
+ said[1].onboundary({name:'word',charIndex:0,charLength:4});assert.deepEqual(c.word,{start:0,end:4});c.stop();assert.equal(c.word,null);
+});
+test('missing, sentence-only, invalid and out-of-order boundaries fall back without fake timing',()=>{
+ const {c,said}=setup();c.play('One two three.');assert.equal(c.word,null);
+ const u=said[0];u.onboundary({name:'sentence',charIndex:0,charLength:14});assert.equal(c.word,null);
+ u.onboundary({name:'word',charIndex:4,charLength:3});assert.deepEqual(c.word,{start:4,end:7});
+ u.onboundary({name:'word',charIndex:0,charLength:3});assert.equal(c.word,null);
+ u.onboundary({name:'word',charIndex:8,charLength:5});assert.equal(c.word,null);
+ c.restart();const next=said.at(-1);next.onboundary({name:'word',charIndex:999,charLength:0});assert.equal(c.word,null);
+ c.restart();said.at(-1).onboundary({name:'word',charIndex:1,charLength:1});assert.equal(c.word,null);
+});
+test('mute restores the last nonzero volume across reloads',()=>{
+ const {c,storage}=setup();c.configure({volume:.4});c.toggleMute();assert.equal(c.preferences.volume,0);
+ const restored=new SpeechController(undefined,()=>({}) as any,storage);restored.toggleMute();assert.equal(restored.preferences.volume,.4);
+ restored.configure({volume:.7});restored.toggleMute();restored.toggleMute();assert.equal(restored.preferences.volume,.7);
+});
+test('previous and next preserve sentence mapping and reject stale speech events',()=>{
+ const {c,said}=setup(),segments=['One.','Two.','Three.'];c.playSentences(segments);const old=said[0];
+ c.navigate(1);assert.equal(c.index,1);assert.equal(c.segments,segments);old.onend();old.onboundary({name:'word',charIndex:0,charLength:3});assert.equal(c.word,null);
+ c.navigate(-1);assert.equal(c.index,0);c.navigate(-1);assert.equal(c.index,0);c.navigate(99);assert.equal(c.index,2);
+});
+test('manual follow suspension is transient while explicit follow preferences persist',()=>{
+ const {c,storage}=setup();c.setFollow(false,false);assert.equal(c.follow,false);assert.equal(new SpeechController(undefined,()=>({}) as any,storage).follow,true);
+ c.setFollow(false);assert.equal(new SpeechController(undefined,()=>({}) as any,storage).follow,false);c.setFollow(true);assert.equal(c.preferences.follow,true);
+});
+test('sentence selection retains deliberate continuous completion without advancing on a single sentence',()=>{
+ const {c,said}=setup();let completed=0;c.playSentences(['One.','Two.'],0,false,()=>completed++);c.selectSentence(1);said.at(-1).onend();assert.equal(completed,0);assert.equal(c.status,'Paused');c.continueReading();said.at(-1).onend();assert.equal(completed,1);
+});
