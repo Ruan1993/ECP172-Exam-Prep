@@ -81,6 +81,31 @@ test('past exam revision preserves Q4 progress, hides answers, saves separately 
 });
 const highlightText=()=>highlights.get('reading-sentence')?.ranges[0].toString();
 
+test('past exam UI preserves every paragraph and question while removing only source prefixes and returning to section navigation',async()=>{
+ const {PastExamQuestions,pastExamSections,scenarioText}=await import('../src/PastExamQuestions');
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);
+ await act(async()=>root.render(<PastExamQuestions/>));
+ const nav=host.querySelector<HTMLElement>('.past-exam-nav')!;
+ assert.equal(host.querySelector('.past-exam-back-to-top'),null);
+ for(const [i,section] of pastExamSections.entries()){
+  await click(nav.querySelectorAll('button')[i]);
+  assert.deepEqual(Array.from(host.querySelectorAll('.past-exam-context'),p=>p.textContent),section.entries.filter(e=>e.kind==='text'&&!e.heading).map(e=>scenarioText(e.text)));
+  assert.doesNotMatch(host.querySelector('.past-exam-scenario')!.textContent!,/ORIGINAL [^•]+•/);
+  assert.deepEqual(Array.from(host.querySelectorAll('.past-exam-question h3'),q=>q.textContent),section.entries.filter(e=>e.kind==='question').map(e=>e.prompt));
+ }
+ let returned:unknown;
+ nav.dataset.top='-200';
+ nav.scrollIntoView=(options)=>{returned=options};
+ await act(async()=>win.dispatchEvent(new win.Event('scroll')));
+ await click(host.querySelector('.past-exam-back-to-top')!);
+ assert.equal(document.activeElement,nav);
+ assert.deepEqual(returned,{block:'start',behavior:'smooth'});
+ nav.dataset.top='100';
+ await act(async()=>win.dispatchEvent(new win.Event('scroll')));
+ assert.equal(host.querySelector('.past-exam-back-to-top'),null);
+ await cleanup();
+});
+
 test('Flashcards replace revision navigation, manual flips stay silent, and legacy ratings persist',async(t)=>{
  const {default:App}=await import('../src/App');
  t.mock.method(Math,'random',()=>.999);
