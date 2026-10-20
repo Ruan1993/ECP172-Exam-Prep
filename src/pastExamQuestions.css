@@ -21,10 +21,11 @@
 .past-exam-feedback{min-height:1.75em;font-size:.95rem;margin:8px 0}
 @media(max-width:650px){.past-exam-question{padding:20px;min-width:0}.past-exam-ratings{flex-direction:column}.past-exam-nav button{flex:1;padding:10px}.past-exam{font-size:1.0625rem;line-height:1.65;min-width:0}.past-exam-context,.past-exam-question h3{font-size:1.125rem;line-height:1.65;overflow-wrap:anywhere}.past-exam-scenario{padding:4px 18px}.past-exam .lf-chapter-hero h1{font-size:2.2rem}}
 @media(max-width:768px){
- .past-exam .past-exam-scenario .past-exam-context,
- .past-exam .past-exam-scenario .past-exam-context *,
  .past-exam .past-exam-question h3,
  .past-exam .past-exam-question h3 *,
  .past-exam .past-exam-answer,
  .past-exam .past-exam-answer *{font-size:22px;line-height:1.7}
+ .past-exam .past-exam-scenario{padding:4px 18px;max-width:100%;box-sizing:border-box}
+ .past-exam .past-exam-scenario .past-exam-context,
+ .past-exam .past-exam-scenario .past-exam-context *{font-size:18px;line-height:1.6;text-align:left;word-spacing:normal;letter-spacing:normal;white-space:normal;word-break:normal;overflow-wrap:break-word}
 }
