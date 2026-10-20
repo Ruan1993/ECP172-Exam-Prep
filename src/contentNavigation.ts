@@ -1,13 +1,15 @@
 import guide from './guide.json';
-export type Page='home'|'q1'|'q2'|'q3'|'q4'|'flashcards';
+export type Page='home'|'q1'|'q2'|'q3'|'q4'|'flashcards'|'past-exams';
 export type ContentRoute={page:Page;index?:number};
 export function routeHash(route:ContentRoute){
  if(route.page==='home')return '#overview';
  if(route.page==='flashcards')return '#flashcards';
+ if(route.page==='past-exams')return '#past-exams';
  return `#${route.page}/${guide[route.page][route.index??0].id}`;
 }
 export function readRoute(hash:string):ContentRoute|null{
  if(hash==='#overview')return {page:'home'};
+ if(hash==='#past-exams')return {page:'past-exams'};
  if(hash==='#flashcards'||hash==='#revision')return {page:'flashcards'};
  for(const page of ['q1','q2','q3','q4'] as const){
   const index=guide[page].findIndex(card=>hash===`#${page}/${card.id}`);

@@ -41,6 +41,44 @@ async function mount(){said.length=0;cancels=0;scrolls.length=0;highlights.clear
 async function cleanup(){await act(async()=>{c.stop();root.unmount()});host.remove();document.body.innerHTML='';win.history.replaceState(null,'','/')}
 const button=(label:string)=>document.querySelector<HTMLButtonElement>(`button[aria-label="${label}"]`)!;
 async function click(element:Element){assert.ok(element);await act(async()=>element.dispatchEvent(new win.MouseEvent('click',{bubbles:true,clientX:20,clientY:910,button:0}) as any))}
+
+test('past exam revision preserves Q4 progress, hides answers, saves separately and supports return navigation',async()=>{
+ const {default:App}=await import('../src/App');
+ const {pastExamStorageKey}=await import('../src/PastExamQuestions');
+ const saved=JSON.stringify({ratings:{'q4-b':'understood'},position:{q1:0,q2:0,q3:0,q4:1},lastQuestion:'q4'});
+ localStorage.setItem('ecp172-learn-first-v1',saved);
+ localStorage.setItem('ecp172-progress-v1','{"legacy":"keep"}');
+ localStorage.removeItem(pastExamStorageKey);
+ win.history.replaceState(null,'','#q4/'+(await import('../src/guide.json')).default.q4[1].id);
+ host=document.createElement('div');document.body.append(host);root=createRoot(host);
+ await act(async()=>root.render(<App/>));
+ const preserved=localStorage.getItem('ecp172-learn-first-v1');
+ const find=(text:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent===text)!;
+ await click(find('Past Exam Questions'));
+ assert.equal(win.location.hash,'#past-exams');
+ assert.equal(host.querySelectorAll('.past-exam-question').length,10);
+ assert.equal(host.querySelector('.past-exam-answer'),null);
+ await click(find('Reveal model answer'));
+ assert.match(host.querySelector('.past-exam-answer strong')!.textContent!,/South African Schools Act/);
+ await click(find('I understand it'));
+ assert.equal(JSON.parse(localStorage.getItem(pastExamStorageKey)!)['q1-1'],'understood');
+ await click(find('Revise later'));
+ assert.equal(JSON.parse(localStorage.getItem(pastExamStorageKey)!)['q1-1'],'later');
+ assert.equal(localStorage.getItem('ecp172-learn-first-v1'),preserved);
+ assert.equal(localStorage.getItem('ecp172-progress-v1'),'{"legacy":"keep"}');
+ const sectionQ4=host.querySelectorAll('.past-exam-nav button')[3];await click(sectionQ4);
+ assert.equal(host.querySelectorAll('.past-exam-question').length,17);
+ assert.equal(host.querySelector('.past-exam-answer'),null);
+ assert.equal(host.querySelectorAll('.past-exam-label[data-label="Original Past-Exam"]').length,2);
+ await click(find('Overview'));
+ assert.ok(host.querySelector('.lf-countdown'));
+ await click(find('Past Exam Questions'));
+ assert.equal(find('Revise later').getAttribute('aria-pressed'),'true');
+ await click(Array.from(host.querySelectorAll('header nav button')).find(b=>b.textContent==='Q4')!);
+ assert.ok(host.querySelector('.lf-page-card'));
+ assert.equal(localStorage.getItem('ecp172-learn-first-v1'),preserved);
+ await cleanup();localStorage.clear();
+});
 const highlightText=()=>highlights.get('reading-sentence')?.ranges[0].toString();
 
 test('Flashcards replace revision navigation, manual flips stay silent, and legacy ratings persist',async(t)=>{

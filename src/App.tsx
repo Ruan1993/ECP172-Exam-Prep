@@ -1,5 +1,6 @@
 import {focusReadingHeading,readRoute,routeHash,type ContentRoute} from './contentNavigation';
 import {Flashcards} from './Flashcards';
+import {PastExamQuestions} from './PastExamQuestions';
 import type {ReadingState} from './readingProgress';
 import {conceptForText} from './learningConcepts';
 import './learningExperience.css';
@@ -16,7 +17,7 @@ import './makeover.css';
 import './interactivePolish.css';
 
 type Question = 'q1'|'q2'|'q3'|'q4';
-type Page = 'home'|Question| 'flashcards';
+type Page = 'home'|Question| 'flashcards'|'past-exams';
 type Rating = 'understood'|'later';
 type StudyCard = {id:string; title:string;kind:'intro'|'concept'|'scenario'|'proposal';body:string[];tag:string;tip?:string;scene?:string};
 type State = ReadingState;
@@ -96,13 +97,13 @@ function App(){
  const exportProgress=()=>{const payload={version:1,kind:'ECP172 Learn First',exportedAt:new Date().toISOString(),...state};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ecp172-learn-first-progress.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
  return <>
  <header className="lf-header"><button className="lf-brand" onClick={()=>go('home')} aria-label="Back to study home"><span className="brand-icon"><GraduationCap/></span><span>ECP172 <strong>Learn First</strong></span></button>
-  <nav className={menu?'open':''} aria-label="Study navigation"><button className={page==='home'?'active':''} onClick={()=>go('home')}>Overview</button>{questions.map(q=><button key={q.id} className={page===q.id?'active':''} onClick={()=>select(q.id,state.position[q.id])}>{q.id.toUpperCase()}</button>)}<button className={page==='flashcards'?'active':''} onClick={()=>go('flashcards')}><Bookmark size={15}/> Flashcards</button></nav>
+  <nav className={menu?'open':''} aria-label="Study navigation"><button className={page==='home'?'active':''} onClick={()=>go('home')}>Overview</button>{questions.map(q=><button key={q.id} className={page===q.id?'active':''} onClick={()=>select(q.id,state.position[q.id])}>{q.id.toUpperCase()}</button>)}<button className={page==='flashcards'?'active':''} onClick={()=>go('flashcards')}><Bookmark size={15}/> Flashcards</button><button className={page==='past-exams'?'active':''} onClick={()=>go('past-exams')}>Past Exam Questions</button></nav>
   <div className="tools"><PWAControls/><button onClick={()=>setDark(d=>!d)} aria-label={dark?'Use light theme':'Use dark theme'}>{dark?<Sun/>:<Moon/>}</button><button className="hamb" onClick={()=>setMenu(m=>!m)} aria-label={menu?'Close menu':'Open menu'}>{menu?<X/>:<Menu/>}</button></div>
  </header>
  <main className="lf-main">
  {page==='home'&&<>
    <ExamCountdown/>
-   <section className="lf-hero"><div className="lf-hero-copy"><span className="lf-eyebrow"><Sparkles size={16}/> YOUR CALMER WAY TO STUDY</span><h1>Less testing.<br/><i>More understanding.</i></h1><p className="hero-lead">Four questions. One clear journey. Proper explanations first, full exam-style answers afterwards. No XP, no pressure, no repeating the same lesson five different ways.</p><div className="hero-actions"><button className="lf-primary" onClick={nextUnrated}>Pick up where I left off <ArrowRight/></button><button className="lf-secondary" onClick={()=>select('q1',0)}>Start at Q1</button><button className="lf-secondary" onClick={()=>go('flashcards')}>Flashcards <RotateCcw size={18}/></button></div></div><div className="hero-art" aria-hidden="true"><span className="orbit orbit-one">✦</span><span className="orbit orbit-two">✳</span><span className="book-shape"><span>⚖️</span><span>🔎</span><span>💬</span><span>🌍</span></span><div className="art-caption">One thing<br/>at a time.</div></div></section>
+   <section className="lf-hero"><div className="lf-hero-copy"><span className="lf-eyebrow"><Sparkles size={16}/> YOUR CALMER WAY TO STUDY</span><h1>Less testing.<br/><i>More understanding.</i></h1><p className="hero-lead">Four questions. One clear journey. Proper explanations first, full exam-style answers afterwards. No XP, no pressure, no repeating the same lesson five different ways.</p><div className="hero-actions"><button className="lf-primary" onClick={nextUnrated}>Pick up where I left off <ArrowRight/></button><button className="lf-secondary" onClick={()=>select('q1',0)}>Start at Q1</button><button className="lf-secondary" onClick={()=>go('flashcards')}>Flashcards <RotateCcw size={18}/></button><button className="lf-secondary" onClick={()=>go('past-exams')}>Past Exam Questions <BookOpen size={18}/></button></div></div><div className="hero-art" aria-hidden="true"><span className="orbit orbit-one">✦</span><span className="orbit orbit-two">✳</span><span className="book-shape"><span>⚖️</span><span>🔎</span><span>💬</span><span>🌍</span></span><div className="art-caption">One thing<br/>at a time.</div></div></section>
    <div className="lf-note"><Heart size={19}/><div><strong>A little reminder</strong><p>You are not here to collect marks or finish random activities. You are here to understand the material well enough to explain it in your own words.</p></div></div>
    <div className="lf-heading-row"><div><span className="lf-eyebrow">YOUR EXAM ROUTE</span><h2>Follow the four questions, in order.</h2></div><p>Choose any question, or continue where you stopped. Each one runs from theory to the full worked example.</p></div>
    <div className="lf-course-grid">{questions.map((q,i)=>{const done=guide[q.id].filter(c=>state.ratings[c.id]==='understood').length;const needs=guide[q.id].filter(c=>state.ratings[c.id]==='later').length;return <button className="lf-course" key={q.id} onClick={()=>select(q.id,state.position[q.id])}><div className="lf-course-top"><span className="lf-course-emoji">{q.emoji}</span><span className="lf-course-number">0{i+1} / 04</span></div><div className="lf-course-unit">{q.unit}</div><h3>{q.title}</h3><p>{q.description}</p><div className="course-progress"><div style={{width:(done/guide[q.id].length)*100+'%'}}/></div><div className="course-meta"><span><Check size={14}/> {done} understood</span><span>{needs>0?`${needs} to revisit`:'Open chapter'} <ArrowRight size={16}/></span></div></button>})}</div>
@@ -126,6 +127,7 @@ function App(){
    </div>
   </div>
  </>}
+ {page==='past-exams'&&<PastExamQuestions/>}
  {page==='flashcards'&&<Flashcards onLearning={(section,id)=>select(section,guide[section].findIndex(card=>card.id===id))}/>}
  <section className="lf-extras"><button onClick={()=>setSourceOpen(v=>!v)} aria-expanded={sourceOpen}><BookOpen size={16}/> About this guide <ChevronDown size={16}/></button>{sourceOpen&&<div className="source-info"><ReadAloud label="about this guide" scope={()=>document.querySelector('.source-info')}/><p>This reading journey follows the 13-page ECP172 study guide prepared for 21 October 2026. Q2 uses concise exam-ready proposals adapted from the guide; the other model answers are retained. Brief teaching prompts and navigation labels are supplementary explanations.</p><p><strong>Source note:</strong> The guide labels proposal A “Literacy and numeracy difficulties”, but the complete proposal itself investigates <strong>language barriers in Grade 8 Social Sciences</strong>. We present its actual contents, without silently claiming it is a numeracy study.</p><p>Your previous website progress remains stored under its original key. This redesigned reading journey saves its own card-by-card choices.</p><button onClick={exportProgress}><Download size={15}/> Download new reading progress</button><button onClick={()=>setShowReset(true)}><RotateCcw size={15}/> Reset new reading choices</button></div>}</section>
  </main>
