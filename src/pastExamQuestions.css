@@ -13,7 +13,7 @@
 .past-exam-ratings{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
 .past-exam-heading{margin:30px 0 15px;font-size:1.3rem}
 .past-exam-context{white-space:pre-wrap;margin:18px 0}
-.past-exam .past-exam-scenario .past-exam-context{text-align:justify}
+.past-exam,.past-exam *{text-align:left}
 .past-exam-scenario{min-width:0;margin:22px 0 30px;padding:6px 26px;border:1px solid var(--lf-border);border-left:3px solid var(--lf-teal);border-radius:16px;background:var(--lf-sky);color:var(--lf-ink)}
 .past-exam-top-lane{position:sticky;bottom:0;z-index:10;display:flex;justify-content:flex-end;align-items:center;min-height:76px;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));background:var(--lf-bg)}
 .past-exam .past-exam-back-to-top{min-height:48px;background:var(--lf-ink);color:var(--lf-paper);box-shadow:0 4px 16px #172f4520}
@@ -31,5 +31,5 @@
  .past-exam button{font-size:17px;line-height:1.6}
  .past-exam .past-exam-scenario{padding:4px 18px;max-width:100%;box-sizing:border-box}
  .past-exam .past-exam-scenario .past-exam-context,
- .past-exam .past-exam-scenario .past-exam-context *{font-size:24px;line-height:1.7;text-align:justify;word-spacing:normal;letter-spacing:normal;white-space:normal;word-break:normal;overflow-wrap:break-word}
+ .past-exam .past-exam-scenario .past-exam-context *{font-size:24px;line-height:1.7;text-align:left;word-spacing:normal;letter-spacing:normal;white-space:normal;word-break:normal;overflow-wrap:break-word}
 }
