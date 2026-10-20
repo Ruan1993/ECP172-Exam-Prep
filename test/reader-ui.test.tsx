@@ -48,7 +48,7 @@ test('past exam revision preserves Q4 progress, hides answers, saves separately 
  const saved=JSON.stringify({ratings:{'q4-b':'understood'},position:{q1:0,q2:0,q3:0,q4:1},lastQuestion:'q4'});
  localStorage.setItem('ecp172-learn-first-v1',saved);
  localStorage.setItem('ecp172-progress-v1','{"legacy":"keep"}');
- localStorage.removeItem(pastExamStorageKey);
+ localStorage.setItem(pastExamStorageKey,JSON.stringify({'q1-7':'later','q2-1':'understood'}));
  win.history.replaceState(null,'','#q4/'+(await import('../src/guide.json')).default.q4[1].id);
  host=document.createElement('div');document.body.append(host);root=createRoot(host);
  await act(async()=>root.render(<App/>));
@@ -56,12 +56,16 @@ test('past exam revision preserves Q4 progress, hides answers, saves separately 
  const find=(text:string)=>Array.from(host.querySelectorAll('button')).find(b=>b.textContent===text)!;
  await click(find('Past Exam Questions'));
  assert.equal(win.location.hash,'#past-exams');
- assert.equal(host.querySelectorAll('.past-exam-question').length,10);
+ assert.equal(host.querySelectorAll('.past-exam-question').length,6);
+ assert.doesNotMatch(host.textContent!,/Religion and Education: parental concerns scenario/);
+ assert.match(host.textContent!,/1 understood · 0 to revise · 50 questions/);
  assert.equal(host.querySelector('.past-exam-answer'),null);
  await click(find('Reveal model answer'));
  assert.match(host.querySelector('.past-exam-answer strong')!.textContent!,/South African Schools Act/);
  await click(find('I understand it'));
  assert.equal(JSON.parse(localStorage.getItem(pastExamStorageKey)!)['q1-1'],'understood');
+ assert.equal(JSON.parse(localStorage.getItem(pastExamStorageKey)!)['q1-7'],'later');
+ assert.equal(JSON.parse(localStorage.getItem(pastExamStorageKey)!)['q2-1'],'understood');
  await click(find('Revise later'));
  assert.equal(JSON.parse(localStorage.getItem(pastExamStorageKey)!)['q1-1'],'later');
  assert.equal(localStorage.getItem('ecp172-learn-first-v1'),preserved);

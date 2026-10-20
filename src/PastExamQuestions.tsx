@@ -7,6 +7,7 @@ type Rating='understood'|'later';
 type Entry={kind:'text';text:string;heading:boolean}|{kind:'question';id:string;prompt:string;answer:string;label:string};
 export const pastExamSections=pack.sections as {id:string;title:string;entries:Entry[]}[];
 const ids=new Set(pastExamSections.flatMap(s=>s.entries.flatMap(e=>e.kind==='question'?[e.id]:[])));
+const retiredIds=new Set(['q1-7','q1-8','q1-9','q1-10']);
 // Source prefixes are presentation metadata; the study pack remains untouched.
 export function scenarioText(text:string){
  return text.replace(/^ORIGINAL [^•]+• [^,]+, pages? \d+(?:[–-]\d+)?\s*/, '');
@@ -15,7 +16,7 @@ function readProgress():Record<string,Rating>{
  try{
   const saved:unknown=JSON.parse(localStorage.getItem(pastExamStorageKey)||'{}');
   if(!saved||typeof saved!=='object'||Array.isArray(saved))return {};
-  return Object.fromEntries(Object.entries(saved).filter(([id,value])=>ids.has(id)&&(value==='understood'||value==='later')));
+  return Object.fromEntries(Object.entries(saved).filter(([id,value])=>(ids.has(id)||retiredIds.has(id))&&(value==='understood'||value==='later')));
  }catch{return {}}
 }
 function Question({entry,rating,onRate}:{entry:Extract<Entry,{kind:'question'}>;rating?:Rating;onRate:(id:string,rating:Rating)=>void}){
@@ -52,7 +53,7 @@ export function PastExamQuestions(){
  return <section className="past-exam" aria-labelledby="past-exam-title">
   <div className="lf-chapter-hero"><div><span className="lf-eyebrow">EXAMINATION REVISION</span><h1 id="past-exam-title">Past Exam Questions</h1><p>Questions, scenarios and model answers from the Final Past-Paper Study Pack.</p></div></div>
   <p>Original Past-Exam, Predicted and Practice questions are labelled separately. The source labels and suggested marks are retained in full.</p>
-  <p>{Object.values(ratings).filter(r=>r==='understood').length} understood · {Object.values(ratings).filter(r=>r==='later').length} to revise · {ids.size} questions</p>
+  <p>{Object.entries(ratings).filter(([id,r])=>ids.has(id)&&r==='understood').length} understood · {Object.entries(ratings).filter(([id,r])=>ids.has(id)&&r==='later').length} to revise · {ids.size} questions</p>
   <nav ref={navigation} tabIndex={-1} className="past-exam-nav" aria-label="Past exam question sections">{pastExamSections.map(s=><button key={s.id} aria-current={section===s.id?'page':undefined} onClick={()=>{setSection(s.id);setFeedback('')}}>{s.id.toUpperCase()}</button>)}</nav>
   <p className="past-exam-feedback" role="status">{feedback}</p>
   <h2>{current.title}</h2>

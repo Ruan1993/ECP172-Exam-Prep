@@ -1,13 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import pack from '../src/pastExamPack.json';
 import {readRoute,routeHash} from '../src/contentNavigation';
 
 test('study pack retains its complete labelled question inventory and cautions',()=>{
  assert.deepEqual(pack.sections.map(s=>s.id),['q1','q2','q3','q4']);
- assert.deepEqual(pack.sections.map(s=>s.entries.filter(e=>e.kind==='question').length),[10,17,10,17]);
+ assert.deepEqual(pack.sections.map(s=>s.entries.filter(e=>e.kind==='question').length),[6,17,10,17]);
  const questions=pack.sections.flatMap(s=>s.entries.filter(e=>e.kind==='question'));
- assert.equal(new Set(questions.map(q=>q.id)).size,54);
+ assert.equal(new Set(questions.map(q=>q.id)).size,50);
+ assert.deepEqual(pack.sections[0].entries.filter(e=>e.kind==='question').map(e=>e.id),['q1-1','q1-2','q1-3','q1-4','q1-5','q1-6']);
+ assert.doesNotMatch(JSON.stringify(pack),/Religion and Education: parental concerns scenario/);
  for(const q of questions){
   assert.ok(q.answer);assert.match(q.prompt!,/marks?[:)]/);
   if(q.prompt!.includes('[Predicted]'))assert.equal(q.label,'Predicted');
@@ -15,7 +18,7 @@ test('study pack retains its complete labelled question inventory and cautions',
  }
  assert.equal(questions.filter(q=>q.label==='Predicted').length,6);
  const text=JSON.stringify(pack);
- assert.match(text,/Confirm the exact FOUR/);
+ assert.match(readFileSync(new URL('../src/guide.json',import.meta.url),'utf8'),/National Policy on Religion and Education/);
  assert.match(text,/remaining nine marks/);
  assert.match(text,/private interviews are safer for victims/);
  assert.match(text,/Ms\. Phindi/);assert.match(text,/Ms\. Zama/);

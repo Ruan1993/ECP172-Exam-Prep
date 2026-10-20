@@ -68,44 +68,6 @@
           "prompt": "1.6 Explain TWO possible consequences of inadequate district support for the school. (4 marks) [Predicted]",
           "answer": "Delayed implementation of Grade R and essential infrastructure improvements (2). Continued inequality because the school lacks guidance, resources and assistance to overcome its challenges (2).",
           "label": "Predicted"
-        },
-        {
-          "kind": "text",
-          "heading": true,
-          "text": "Religion and Education: parental concerns scenario"
-        },
-        {
-          "kind": "text",
-          "heading": false,
-          "text": "ORIGINAL SCENARIO • EDSB700 Special Assessment, page 5 You are an educator at a school in the city which has a diverse student body, including religious affiliation, and you have been tasked with teaching the religion studies curriculum in your respective phase of teaching. Numerous parents whose religious views are varied, have raised concerns about the inclusion of religion studies in the school curriculum. They are apprehensive that teaching this curriculum will indoctrinate their children, who they prefer to raise in their own religious belief system."
-        },
-        {
-          "kind": "question",
-          "id": "q1-7",
-          "prompt": "3.1 Briefly discuss the South African Policy on Religion (2003) and provide an explanation of the difference between religion education and religious education. (5 marks) [Original]",
-          "answer": "The National Policy on Religion and Education (2003) promotes respect for freedom of religion, diversity and constitutional values in public education. Religion education is educational study ABOUT religions, beliefs and their social/cultural roles, without seeking conversion. Religious education is instruction WITHIN a particular faith to nurture adherence to that faith. A public-school teacher must not indoctrinate learners.",
-          "label": "Original Past-Exam"
-        },
-        {
-          "kind": "question",
-          "id": "q1-8",
-          "prompt": "3.2 Clarify the relationship between religion and education by discussing the four possible models for structuring the relationship between religion and the state as per the Policy on Religion and Education (2003). (12 marks) [Original]",
-          "answer": "Four broad models: (1) Theocratic/religious state: one religion strongly determines state policy. (2) State religion: an official religion receives special state recognition or preference. (3) Strict separation/secular exclusion: religion is largely excluded from public state institutions. (4) Cooperative or impartial accommodation: the democratic state protects freedom of belief, treats religions fairly and permits educational study of religions without favouring one. Explain the consequences of each for equal learner rights. NOTE: Confirm the exact FOUR model labels against your prescribed course notes; this is a study explanation, not a verified verbatim classification from the policy.",
-          "label": "Original Past-Exam"
-        },
-        {
-          "kind": "question",
-          "id": "q1-9",
-          "prompt": "3.3 Justify the model that provides the best framework for religion and education in democratic South Africa. (3 marks) [Original]",
-          "answer": "An impartial, rights-based approach best supports South Africa’s Constitution because it protects freedom of religion and conscience, respects religious diversity and avoids state or teacher indoctrination. Learners can study religions fairly while retaining their own beliefs.",
-          "label": "Original Past-Exam"
-        },
-        {
-          "kind": "question",
-          "id": "q1-10",
-          "prompt": "3.4 Explain how you would respond to the parents’ concerns, considering your personal beliefs and your role as an educator. Give a phase-specific example. (5 marks) [Original]",
-          "answer": "I would explain that religion education teaches ABOUT different belief systems; it does not ask learners to practise or adopt a religion. My personal beliefs must not influence assessment or favouritism. I would share the curriculum and invite respectful discussion. In Senior Phase Social Sciences, for example, learners could compare the cultural significance of different religious celebrations using neutral sources, with equal respect for non-religious learners.",
-          "label": "Original Past-Exam"
         }
       ]
     },
